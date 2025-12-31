@@ -748,8 +748,9 @@ const [posts,setPosts] = useState([]);
         if (datas.data) {
             const userData = datas.data;
 
+
             // Store the profile _id for follow API
-            setTargetProfileId(userData._id);
+            setTargetProfileId(id);
 
             setUser({
                 id: userData._id || userData.id,
@@ -860,9 +861,7 @@ const [posts,setPosts] = useState([]);
     }
   }
   
-
-
-
+  
   useEffect(()=>{
     
     const fetchData= async()=>{
@@ -1081,7 +1080,7 @@ console.log("🔶 RENDERING with isOwnProfile:", profileData.isOwnProfile);
               {/* Stats */}
               <div className="flex space-x-10 mb-5">
                 <Stat value={profileData.posts} label="posts" />
-                <Stat value={profileData.followers} label="followers" />
+                <Stat value={followersCount} label="followers" />
                 <Stat value={profileData.following} label="following" />
               </div>
 

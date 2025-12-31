@@ -89,6 +89,7 @@ export const InstagramDashboard = () => {
   }, []);
 
 
+  
   const [likeLoading,setLikeLoading] =useState({});
 
   // Fetch all posts from everyone
@@ -146,7 +147,6 @@ export const InstagramDashboard = () => {
   const goToUserProfile = (userId) => {
     if (userId) {
       navigate(`/profile/${userId}`);
-
       console.log(userId);
     }
   };
@@ -211,7 +211,7 @@ const handleLike = async (profileId, postId) => {
         const res = await api.post(`/auth/profile/${profileId}/${postId}/like`);
         
         console.log("Like response:", res.data); // Debug
-        
+
         // Update with server response
         setPosts(prev =>
             prev.map(post =>
