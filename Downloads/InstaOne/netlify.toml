@@ -1,0 +1,4 @@
+[build]
+  base = "insta"
+  publish = "build"
+  command = "npm run build"
