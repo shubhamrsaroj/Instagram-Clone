@@ -1,5 +1,5 @@
 import express from "express";
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 import cors from "cors";
 import helmet from "helmet";
 import path from "path";
@@ -29,5 +29,5 @@ mongoose.connect(process.env.MONGODB_URI)
 .then(()=>{console.log("mongodb connected")});
 
 apis.listen(5000,()=>{
-    console.log("Sever Started Successfully");
+    console.log("Server Started Successfully");
 })

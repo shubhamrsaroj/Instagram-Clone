@@ -162,7 +162,8 @@ routers.get("/fullProfile/:userId",protect,async(req,res)=>{
             gender: profile.gender || "",
             phoneNo: profile.phoneNo || "",
             followedBy:profile.followedBy,
-            follow:profile.follow
+            follow:profile.follow,
+            following:profile.following
     });
 }
 );
@@ -247,13 +248,14 @@ routers.get("/posts/:userId",protect,async(req,res)=>{
     const users = req.params.userId;
 
     const userIds = await Users.findById(users); 
-    
 
     const postData = await Profile.findOne({user:userIds._id});
 
+    const postLength =postData.posts.length;
+
     console.log(postData);
 
-    return res.status(200).json({message:"fetched succesfully",posts:postData.posts,profileId:postData._id});
+    return res.status(200).json({message:"fetched succesfully",posts:postData.posts,profileId:postData._id,postLength:postLength});
 
 });
 
@@ -274,11 +276,15 @@ routers.put("/profile/:profileId/posts/:postsId/",async(req,res)=>{
     );
 
 
+
     return res.status(200).json({message:"Caption Update",captionUpdate:updatedCaption});
 
       //{ $set: { "arrayName.$.fieldName": value } }
 
+
+
 });
+
 
 routers.post("/profile/:profileId/:postId/like",protect,async(req,res)=>{
     
@@ -325,6 +331,10 @@ routers.post("/profile/:profileId/:postId/like",protect,async(req,res)=>{
 
 });
 
+
+
+
+
 routers.delete("/profile/:profileId/posts/:postsId",async(req,res)=>{
 
     try{
@@ -339,20 +349,23 @@ routers.delete("/profile/:profileId/posts/:postsId",async(req,res)=>{
 
     );
 
+
     //$pull: { arrayName: { key: value } }
     return res.status(200).json({message:"posts deleted successfully"});
+
+
 }
     catch(err){
         console.log(err);
     }
 });
 
-
-    //sabse pehle mai ye check karunga ki  current user ka id lunga 
+    //sabse pehle mai ye check karunga ki  current user ka id lunga
     //uska baad mai populate aur select karunga user , ko uske andar user aur username 
     //jaise profile ke andar posts profilePicture user hai ,
     //uske baad flatMap use karunga , jiske wajah se combine hojayega 
     //posts aur profile 
+
 
 routers.get("/everyPosts", protect, async (req, res) => {  // ✅ Added protect
     try {
@@ -408,12 +421,27 @@ routers.post("/profile/:userId/follow",protect,async(req,res)=>{
 
     const profile = await Profile.findOne({ user:userId });
 
+    const currentUsersId = req.user._id;
+
+    const myprofile = await Profile.findOne({user:currentUsersId});
+
+
+
     if (!profile.followedBy) {
         profile.followedBy = [];
     }
 
+    if(!myprofile.following){
+        myprofile.following=[];
+    }
+
     const currentUserId = req.user._id;
     const alreadyFollowed = profile.followedBy.some(id => String(id) === String(currentUserId));
+
+
+    const alreadyFollowing = myprofile.following.some((id) =>String(id) === String(userId));
+
+
 
     if (alreadyFollowed) {
         profile.followedBy = profile.followedBy.filter(id => String(id) !== String(currentUserId));
@@ -421,13 +449,22 @@ routers.post("/profile/:userId/follow",protect,async(req,res)=>{
         profile.followedBy.push(currentUserId);
     }
 
-    const followers = profile.followedBy ? profile.followedBy.length : 0;
+    if(alreadyFollowing){
+        myprofile.following = myprofile.following.filter((id)=>String(id) !== String(userId));
+    }
+    else{
+        myprofile.following.push(userId);
+    }
+
 
     await profile.save();
+    await myprofile.save();
 
     return res.status(200).json({
         follow: !alreadyFollowed,
-        followedBy: followers
+        followedBy: profile.followedBy.length,
+        following:myprofile.following.length
+
     });
 
     //dekho maine backend me profile ka id bheja jise mai follow karne jaa raha hu 
@@ -436,9 +473,9 @@ routers.post("/profile/:userId/follow",protect,async(req,res)=>{
     //agar hoga 
     //to koi bat nahi 
     //nahi toh mai add kar dunga 
-    
-
 });
+
+
 
 export default routers;
 

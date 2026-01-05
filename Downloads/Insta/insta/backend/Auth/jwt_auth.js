@@ -13,7 +13,7 @@ export const protect = async(req,res,next)=>{
 
             const users = jwt.verify(token,process.env.JWT_SECRET);
 
-            req.user= await Users.findById(users._id).select("-password");
+            req.user = await Users.findById(users._id).select("-password");
 
             if(!users){
                 return res.status(400).json({message:"User not verified"});

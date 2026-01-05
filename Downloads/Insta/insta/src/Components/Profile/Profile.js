@@ -173,6 +173,7 @@ const PostDetailModal = ({ post, onClose, profileData, getImageUrl, onDelete, on
 
           const pId = profileId.data.profileId;
 
+
           const posts =post._id;
 
             await api.delete(`/auth/profile/${pId}/posts/${posts}`);
@@ -587,6 +588,39 @@ const EditPostModal = ({ post, onClose, onSave, getImageUrl, profileData }) => {
     );
 };
 
+const [postData,setPostData] =useState(0);
+
+
+
+useEffect(()=>{
+
+const fetchData=async()=>{
+
+  try{
+
+    const userData =await api.get(`/auth/me`);
+
+    const userId = userData.data.id;
+
+    const getPostLength = await api.get(`/auth/posts/${userId}`);
+
+    const postData = getPostLength.data.postLength;
+
+
+    setPostData(postData);
+
+
+  }
+  catch(err){
+    
+    console.log(err);
+  }
+
+}
+
+   fetchData();
+
+},[]);
 
 // Handle editing a post
 const handleEditPost = (post) => {
@@ -654,6 +688,7 @@ const formatDate = (dateString) => {
 
 // Add these state variables with your other useState declarations
 const [isFollowing, setIsFollowing] = useState(false);
+const [followingCount,setFollowingCount] =useState(0);
 const [followersCount, setFollowersCount] = useState(0);
 const [isFollowLoading, setIsFollowLoading] = useState(false);
 const [targetProfileId, setTargetProfileId] = useState(null);
@@ -661,6 +696,8 @@ const [targetProfileId, setTargetProfileId] = useState(null);
 const {id} =useParams();
  // Posts Data
 const [posts,setPosts] = useState([]);
+
+  const [likes,setLikesCount] =useState(0);
 
   const [previewImage,setPreviewImage] =useState(null);
 
@@ -704,6 +741,8 @@ const [posts,setPosts] = useState([]);
       const isOwnprofiles = !id || String(id) === String(userId);
 
         const datas=await api.get(`/auth/fullProfile/${profileId}`);
+
+    
 
          console.log("🔵 My ID:", userId);
     console.log("🟢 URL ID:", id);
@@ -768,6 +807,7 @@ const [posts,setPosts] = useState([]);
 
             // Set followers count from followedBy array
             setFollowersCount(userData?.followedBy?.length || 0);
+            setFollowingCount(userData?.following?.length || 0);
 
             // Check if current user is following this profile
             if (!isOwnprofiles && userData?.followedBy) {
@@ -841,9 +881,6 @@ const [posts,setPosts] = useState([]);
                     "Content-Type": "multipart/form-data"
                 }
     });
-
-  
-  
   }
 
 
@@ -953,9 +990,9 @@ console.log("🔶 RENDERING with isOwnProfile:", profileData.isOwnProfile);
               
               {/* Stats */}
               <div className="flex-1 flex justify-around">
-                <MobileStat value={profileData.posts} label="posts" />
+                <MobileStat value={postData} label="posts" />
                 <MobileStat value={profileData.followers} label="followers" />
-                <MobileStat value={profileData.following} label="following" />
+                <MobileStat value={followingCount} label="following" />
               </div>
             </div>
 
@@ -1079,9 +1116,9 @@ console.log("🔶 RENDERING with isOwnProfile:", profileData.isOwnProfile);
 
               {/* Stats */}
               <div className="flex space-x-10 mb-5">
-                <Stat value={profileData.posts} label="posts" />
+                <Stat value={postData} label="posts" />
                 <Stat value={followersCount} label="followers" />
-                <Stat value={profileData.following} label="following" />
+                <Stat value={followingCount} label="following" />
               </div>
 
               {/* Bio */}
@@ -1306,9 +1343,6 @@ console.log("🔶 RENDERING with isOwnProfile:", profileData.isOwnProfile);
     </button>
 )}
       
-      
-
-
         {/* Mobile Bottom Navigation */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 px-6 py-3">
           <div className="flex justify-around items-center">

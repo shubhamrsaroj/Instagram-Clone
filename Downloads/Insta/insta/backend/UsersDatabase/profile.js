@@ -32,6 +32,13 @@ const Profile = new mongoose.Schema({
            type:mongoose.Schema.Types.ObjectId,
            ref:"Users"
         }],
+
+        following:[{
+             
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"Users"
+        }],
+
         follow:{
             
             type:Number,
