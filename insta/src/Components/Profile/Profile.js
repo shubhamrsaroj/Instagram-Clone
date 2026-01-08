@@ -1,5 +1,5 @@
 // InstagramProfile.jsx
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from '../../Interceptor/api';
 import { useNavigate,useParams } from 'react-router-dom';
 import { useRef } from 'react';
@@ -145,7 +145,6 @@ const InstagramProfile = () => {
   // Post Detail Modal Component with Edit/Delete Options
 const PostDetailModal = ({ post, onClose, profileData, getImageUrl, onDelete, onEdit }) => {
     const [isLiked, setIsLiked] = useState(false);
-    const [likedCount,setLikedCount] =useState(0);
     const [isSaved, setIsSaved] = useState(false);
     const [showOptionsMenu, setShowOptionsMenu] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -162,24 +161,6 @@ const PostDetailModal = ({ post, onClose, profileData, getImageUrl, onDelete, on
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-
-
-    useEffect(()=>{
-
-      const fetchData = async()=>{
-
-        
-
-        const profileData = await api.get(`/auth/profileId/${id}/postsData/${post._id}`);
-
-        setLikedCount(profileData.data.likedCount);
-
-      }
-
-      fetchData();
-    });
-
-
     
     const handleDelete = async () => {
         try {
@@ -429,7 +410,7 @@ const PostDetailModal = ({ post, onClose, profileData, getImageUrl, onDelete, on
                         </div>
 
                         <p className="font-semibold text-gray-900 dark:text-white text-sm mb-1">
-                            {likedCount} likes
+                            {isLiked ? (post.likes || 0) + 1 : post.likes || 0} likes
                         </p>
 
                         <p className="text-gray-400 text-xs uppercase">
@@ -610,8 +591,6 @@ const EditPostModal = ({ post, onClose, onSave, getImageUrl, profileData }) => {
 const [postData,setPostData] =useState(0);
 
 
-const [showPost,setShowPost]=useState(true);
-
 
 useEffect(()=>{
 
@@ -745,7 +724,9 @@ const [posts,setPosts] = useState([]);
   const navigate =useNavigate();
 
 
-  
+
+
+
 
   useEffect(()=>{
     
@@ -791,7 +772,7 @@ const [posts,setPosts] = useState([]);
 
     fetchData();
 
-  },[id,showPost]);
+  },[id]);
 
 
   useEffect(() => {
@@ -839,7 +820,7 @@ const [posts,setPosts] = useState([]);
     };
 
     fetchData();
-}, [id,showPost]);
+}, [id]);
 
 
 
@@ -900,10 +881,6 @@ const [posts,setPosts] = useState([]);
                     "Content-Type": "multipart/form-data"
                 }
     });
-
-    setShowPost(false);
-
-    setShowUploadModal(false);
   }
 
 
@@ -943,7 +920,7 @@ const [posts,setPosts] = useState([]);
 
     fetchData();
 
-  },[id,showPost]);
+  },[id]);
 
 
   // Add this right before return
@@ -1282,12 +1259,7 @@ console.log("🔶 RENDERING with isOwnProfile:", profileData.isOwnProfile);
           <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
             <div className="bg-white dark:bg-gray-900 rounded-xl max-w-lg w-full max-h-[90vh] overflow-hidden">
               {/* Modal Header */}
-              {showPost ?
-              (
-                <div>
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700"
-              
-              >
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                 
                 <h2 className="font-semibold text-gray-900 dark:text-white">
                   New Post
@@ -1296,14 +1268,12 @@ console.log("🔶 RENDERING with isOwnProfile:", profileData.isOwnProfile);
                   onClick={handleUpload}
                   disabled={isUploading}
                   className="text-blue-500 hover:text-blue-600 font-semibold disabled:opacity-50"
-                  
                 >
                   {isUploading ? 'Sharing...' : 'Share'}
                 </button>
               </div>
-           
 
-              
+              {/* Preview Image */}
               <div className="aspect-square bg-black">
                 {previewImage && (
                   <img 
@@ -1312,9 +1282,7 @@ console.log("🔶 RENDERING with isOwnProfile:", profileData.isOwnProfile);
                     className="w-full h-full object-contain"
                   />
                 )}
-
               </div>
-              
 
               {/* Caption Input */}
               <div className="p-4">
@@ -1343,21 +1311,6 @@ console.log("🔶 RENDERING with isOwnProfile:", profileData.isOwnProfile);
                   {caption.length}/2,200
                 </div>
               </div>
-
-              </div>) :(<div>{ showPostModal && selectedPost && (
-    <PostDetailModal 
-        post={selectedPost}
-        onClose={() => {
-            setShowPostModal(false);
-            setSelectedPost(null);
-            
-        }}
-        profileData={profileData}
-        getImageUrl={getImageUrl}
-       onEdit={handleEditPost}
-    />
-    
-)}</div>)}
 
               {/* Error Message */}
               {error && (
@@ -1432,7 +1385,6 @@ console.log("🔶 RENDERING with isOwnProfile:", profileData.isOwnProfile);
         onClose={() => {
             setShowPostModal(false);
             setSelectedPost(null);
-            
         }}
         profileData={profileData}
         getImageUrl={getImageUrl}

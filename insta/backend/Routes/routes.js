@@ -6,10 +6,13 @@ import { sendEmail } from "../Nodemailer/nodemailer.js";
 import Profile from "../UsersDatabase/profile.js";
 import { protect } from "../Auth/jwt_auth.js";
 import multer from "multer";
-
+import profile from "../UsersDatabase/profile.js";
+import { stringify } from "uuid";
 
 
 const routers =express.Router();
+
+
 
 const storage= multer.diskStorage({
    
@@ -58,8 +61,6 @@ routers.post("/register",async(req,res)=>{
             posts: [],
         });
 
-
-        
         // Save profile reference to user
         mydata.profile = profile._id;
        
@@ -251,7 +252,7 @@ routers.get("/posts/:userId",protect,async(req,res)=>{
     const postData = await Profile.findOne({user:userIds._id});
 
     const postLength =postData.posts.length;
-    
+
     console.log(postData);
 
     return res.status(200).json({message:"fetched succesfully",posts:postData.posts,profileId:postData._id,postLength:postLength});
@@ -283,14 +284,6 @@ routers.put("/profile/:profileId/posts/:postsId/",async(req,res)=>{
 
 
 });
-
-
-//ek cheej samjho ki jab
-//maine post open kiya toh
-//uske andar , url me postId nahi hai 
-//toh kaha se wo data dikhega jaise wo caption dikhe hai 
-//waise like bhi dikhega 
-
 
 
 routers.post("/profile/:profileId/:postId/like",protect,async(req,res)=>{
@@ -338,26 +331,8 @@ routers.post("/profile/:profileId/:postId/like",protect,async(req,res)=>{
 
 });
 
-routers.get("/profileId/:profileId/postsData/:postId",protect,async(req,res)=>{
 
-    const {postId,profileId} = req.params;
 
-    const myProfileData = await Profile.findOne({user:profileId});
-
-    console.log(myProfileData);
-
-    const postsData = myProfileData.posts.id(postId);
-
-    const likedCount = postsData.likedBy ? postsData.likedBy.length:0;
-
-    return res.status(200).json({
-        likedCount:likedCount
-    });
-
-});
-
-//one thing i can do 
-//
 
 
 routers.delete("/profile/:profileId/posts/:postsId",async(req,res)=>{
