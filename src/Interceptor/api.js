@@ -2,7 +2,7 @@ import axios from "axios";
 
 
 export const api = axios.create({
-    baseURL: ["http://localhost:5000/api", "https://instagram-clone-df6g.onrender.com"],
+    baseURL: ["http://localhost:5000/api", "https://instagram-clone-df6g.onrender.com/api/auth/"],
     headers: {
         "Content-Type": "application/json"
     }
