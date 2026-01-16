@@ -2,7 +2,9 @@ import axios from "axios";
 
 
 export const api = axios.create({
-    baseURL: ["http://localhost:5000/api", "https://instagram-clone-df6g.onrender.com/api/auth"],
+    baseURL: process.env.NODE_ENV === 'production'
+        ? "https://instagram-clone-df6g.onrender.com/api"
+        : "http://localhost:5000/api",
     headers: {
         "Content-Type": "application/json"
     }
@@ -25,7 +27,7 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use((res) => res, (error) => {
 
-    if (error.response.status === 401) {
+    if (error.response && error.response.status === 401) {
 
         localStorage.removeItem("token");
 
