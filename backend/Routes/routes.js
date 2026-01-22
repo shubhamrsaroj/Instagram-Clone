@@ -25,6 +25,7 @@ console.log("Cloudinary Config:", {
 });
 
 
+
 const routers = express.Router();
 
 const storage = new CloudinaryStorage({
@@ -34,6 +35,7 @@ const storage = new CloudinaryStorage({
         allowed_formats: ["jpg", "png", "jpeg", "webp"],
     },
 });
+
 
 const upload = multer({ storage });
 
@@ -250,15 +252,12 @@ routers.post("/posts", protect, uploadImage, async (req, res) => {
         caption: req.body.caption || "",
         likes: 0,
         likedBy: [],
-        comments: 0,
+        comments: [],
         createdAt: new Date()
-
     };
 
+
     profileData.posts.unshift(posts);
-
-
-
     await profileData.save();
 
     return res.status(200).json({ message: "Uploaded Succesfully", profileData });
@@ -447,8 +446,6 @@ routers.delete("/profile/:profileId/posts/:postsId", async (req, res) => {
             { new: true }
 
         );
-
-
         //$pull: { arrayName: { key: value } }
         return res.status(200).json({ message: "posts deleted successfully" });
 
@@ -468,14 +465,16 @@ routers.delete("/profile/:profileId/posts/:postsId", async (req, res) => {
 //uske baad flatMap use karunga , jiske wajah se combine hojayega 
 //posts aur profile 
 
-
 routers.get("/everyPosts", protect, async (req, res) => {  // ✅ Added protect
     try {
         const currentUserId = req.user._id;  // ✅ Get current user
 
         const profiles = await Profile.find({})
             .populate("user", "username email")
-            .select("posts user profilePicture ");
+            .populate("posts.comments.commentedBy", "username") // ✅ Populate comment authors
+            .select("posts user profilePicture");
+
+
 
         const allPosts = profiles.flatMap(profile =>
             profile.posts.map(post => {
@@ -501,7 +500,14 @@ routers.get("/everyPosts", protect, async (req, res) => {  // ✅ Added protect
                         email: profile.user.email,
                         profilePicture: profile.profilePicture
                     },
-                    profileId: profile._id
+                    profileId: profile._id,
+
+
+                    comments: post.comments.map(comment => ({
+                        text: comment.text,
+                        user: comment.commentedBy?.username || "Unknown", // ✅ Map username
+                        createdAt: comment.createdAt
+                    }))
                 };
             })
         );
@@ -575,6 +581,30 @@ routers.post("/profile/:userId/follow", protect, async (req, res) => {
     //agar hoga 
     //to koi bat nahi 
     //nahi toh mai add kar dunga 
+});
+
+
+routers.post("/profile/:userId/comment/:postsId/:profileId", protect, async (req, res) => {
+
+    const userId = req.user._id;
+
+    const { commentsText } = req.body;
+
+    const { postsId, profileId } = req.params;
+
+    const profile = await Profile.findById(profileId);
+
+    const postsData = profile.posts.id(postsId);
+
+    postsData.comments.push({
+        commentedBy: userId,
+        text: commentsText
+    });
+    await profile.save();
+
+    return res.status(200).json({ comments: commentsText, postsId: postsId, userId: userId });
+
+
 });
 
 

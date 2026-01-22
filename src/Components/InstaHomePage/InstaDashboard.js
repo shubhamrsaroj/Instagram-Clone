@@ -91,6 +91,7 @@ export const InstagramDashboard = () => {
 
 
   const [likeLoading, setLikeLoading] = useState({});
+  const [commentText, setCommentText] = useState({}); // State for comment inputs
 
   // Fetch all posts from everyone
   useEffect(() => {
@@ -249,6 +250,45 @@ export const InstagramDashboard = () => {
     setPosts(posts.map(post =>
       post.id === postId ? { ...post, saved: !post.saved } : post
     ));
+  };
+
+  const handleCommentChange = (postId, text) => {
+    setCommentText(prev => ({ ...prev, [postId]: text }));
+  };
+
+  const handlePostComment = async (profileId, postId) => {
+    const text = commentText[postId];
+    if (!text || !text.trim()) return;
+
+    try {
+      const res = await api.post(`/auth/profile/${user.id}/comment/${postId}/${profileId}`, {
+        commentsText: text
+      });
+
+      if (res.status === 200) {
+        setPosts(prev =>
+          prev.map(post => {
+            if (post.id === postId) {
+              return {
+                ...post,
+                comments: [
+                  ...post.comments,
+                  {
+                    user: user.username, // Optimistic update with current user's name
+                    text: text
+                  }
+                ]
+              };
+            }
+            return post;
+          })
+        );
+        // Clear input
+        setCommentText(prev => ({ ...prev, [postId]: '' }));
+      }
+    } catch (error) {
+      console.error("❌ Error posting comment:", error);
+    }
   };
 
   // Styles
@@ -777,6 +817,7 @@ export const InstagramDashboard = () => {
                     <div style={styles.viewComments}>
                       View all {post.comments.length} comments
                     </div>
+
                     {post.comments.slice(0, 2).map((comment, idx) => (
                       <div key={idx} style={styles.comment}>
                         <span style={styles.commentUser}>{comment.user || comment.username}</span> {comment.text || comment.content}
@@ -794,8 +835,16 @@ export const InstagramDashboard = () => {
                   type="text"
                   placeholder="Add a comment..."
                   style={styles.commentInput}
+                  value={commentText[post.id] || ''}
+                  onChange={(e) => handleCommentChange(post.id, e.target.value)}
                 />
-                <button style={styles.postBtn}>Post</button>
+                <button
+                  style={styles.postBtn}
+                  onClick={() => handlePostComment(post.profileId, post.id)}
+                  disabled={!commentText[post.id]?.trim()}
+                >
+                  Post
+                </button>
               </div>
             </article>
           ))}

@@ -62,11 +62,27 @@ const Profile = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: "Users"
         }],
-        
-        comments:{
-            type:Number,
-            default:0
+
+        comments:[{
+
+        text:{
+            type:String,
+            default:null
         },
+
+        commentedBy:
+            {
+                type:mongoose.Schema.Types.ObjectId,
+                ref:"Users"
+            }
+        ,
+        createdAt: {
+          type: Date,
+          default: Date.now
+        }
+
+        }],
+
         createdAt:{
             type:String,
             default:Date.now()
