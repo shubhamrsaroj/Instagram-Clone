@@ -76,10 +76,18 @@ const Profile = new mongoose.Schema({
                 ref:"Users"
             }
         ,
+
+        likedBy:
+        {
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"Users"
+
+        },
+
         createdAt: {
           type: Date,
           default: Date.now
-        }
+        } 
 
         }],
 

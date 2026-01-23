@@ -961,7 +961,7 @@ const InstagramProfile = () => {
   const [followingData, setFollowingData] = useState([]);
   const [showFollowingModal, setShowFollowingModal] = useState(false);
 
-  
+
   // Posts Data
 
 
@@ -1048,8 +1048,6 @@ const InstagramProfile = () => {
       const isOwnprofiles = !id || String(id) === String(userId);
 
       const datas = await api.get(`/auth/fullProfile/${profileId}`);
-
-
 
       console.log("🔵 My ID:", userId);
       console.log("🟢 URL ID:", id);
@@ -1552,7 +1550,7 @@ const InstagramProfile = () => {
                   </div>
                   <div className="flex items-center gap-1 text-white font-semibold">
                     <Icons.Comment />
-                    <span>{post.comments || 0}</span>
+                    <span>{post.comments?.length || 0}</span>
                   </div>
                 </div>
               </div>
