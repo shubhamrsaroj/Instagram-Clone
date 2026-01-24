@@ -2,102 +2,100 @@ import mongoose from "mongoose";
 
 const Profile = new mongoose.Schema({
 
-    user:{
-         type:mongoose.Schema.Types.ObjectId,
-         ref:"Users",
-         required:true
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Users",
+        required: true
     },
-    name:{
-        type:String
+    name: {
+        type: String
     },
-    bio:{
-        type:String,
-        trim:true,
-       maxLength:300
+    bio: {
+        type: String,
+        trim: true,
+        maxLength: 300
     },
-    gender:{
-        type:String,
-        enum:["male","female"],
-        default:"male"
-    },
-
-    phoneNo:{
-        type:String
-    },
-    profilePicture:{
-        type:String
+    gender: {
+        type: String,
+        enum: ["male", "female"],
+        default: "male"
     },
 
-    followedBy:[{
-           type:mongoose.Schema.Types.ObjectId,
-           ref:"Users"
-        }],
+    phoneNo: {
+        type: String
+    },
+    profilePicture: {
+        type: String
+    },
 
-        following:[{
-             
-            type:mongoose.Schema.Types.ObjectId,
-            ref:"Users"
-        }],
+    followedBy: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Users"
+    }],
 
-        follow:{
-            
-            type:Number,
-            default:0
+    following: [{
+
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Users"
+    }],
+
+    follow: {
+
+        type: Number,
+        default: 0
+    },
+
+    posts: [{
+
+        image: {
+            type: String
         },
-
-    posts:[{
-       
-        image:{
-            type:String
+        caption: {
+            type: String,
+            default: ""
         },
-        caption:{
-            type:String,
-            default:""
+        likes: {
+            type: Number,
+            default: 0
         },
-        likes:{
-            type:Number,
-            default:0
-        },
-         likedBy: [{
+        likedBy: [{
             type: mongoose.Schema.Types.ObjectId,
             ref: "Users"
         }],
 
-        comments:[{
+        comments: [{
 
-        text:{
-            type:String,
-            default:null
-        },
+            text: {
+                type: String,
+                default: null
+            },
 
-        commentedBy:
+            commentedBy:
             {
-                type:mongoose.Schema.Types.ObjectId,
-                ref:"Users"
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Users"
             }
-        ,
+            ,
 
-        likedBy:
-        {
-            type:mongoose.Schema.Types.ObjectId,
-            ref:"Users"
+            likedBy: [{
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Users"
+            }],
 
-        },
-
-        createdAt: {
-          type: Date,
-          default: Date.now
-        } 
+            createdAt: {
+                type: Date,
+                default: Date.now
+            }
 
         }],
 
-        createdAt:{
-            type:String,
-            default:Date.now()
+        createdAt: {
+            type: String,
+            default: Date.now()
         }
-        
+
     }]
-    
+
 });
 
-export default mongoose.model("Profile",Profile);
+export default mongoose.model("Profile", Profile);

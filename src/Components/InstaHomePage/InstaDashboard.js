@@ -173,6 +173,61 @@ export const InstagramDashboard = () => {
 
 
 
+
+
+  const handleLikeComment = async (profileId, postId, commentId) => {
+    // Optimistic update
+    setPosts(prev => prev.map(post => {
+      if (post.id === postId) {
+        return {
+          ...post,
+          comments: post.comments.map(c => {
+            if (c._id === commentId) {
+              return {
+                ...c,
+                isLiked: !c.isLiked,
+                likesCount: c.isLiked ? (c.likesCount - 1) : (c.likesCount + 1)
+              };
+            }
+            return c;
+          })
+        };
+      }
+      return post;
+    }));
+
+    try {
+      const res = await api.post(`/auth/profile/${user.id}/comment/${postId}/${profileId}/${commentId}/like`);
+
+      if (res.status === 200) {
+        // Update with actual server data if needed, or rely on optimistic if simple toggle
+        // The backend returns { likedBy: length }
+        const newLikesCount = res.data.likedBy;
+
+        setPosts(prev => prev.map(post => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              comments: post.comments.map(c => {
+                if (c._id === commentId) {
+                  return {
+                    ...c,
+                    likesCount: newLikesCount
+                  };
+                }
+                return c;
+              })
+            };
+          }
+          return post;
+        }));
+      }
+    } catch (error) {
+      console.error("Like comment error", error);
+      // Revert could be added here if needed, but for now focusing on removing the heavy refetch
+    }
+  };
+
   const handleLike = async (profileId, postId) => {
 
     if (likeLoading[postId]) return;
@@ -182,7 +237,6 @@ export const InstagramDashboard = () => {
 
     //ab uske baad jayega setLikeLoading() me 
 
-
     setLikeLoading(prev => ({ ...prev, [postId]: true }));
 
     //{1:true}
@@ -191,8 +245,6 @@ export const InstagramDashboard = () => {
     const originalPost = posts.find(post => post.id === postId);
     const wasLiked = originalPost?.liked || false;
     const originalLikes = originalPost?.likes || 0;
-
-
 
     // ✅ FIXED: Optimistic update with correct condition
     setPosts(prev =>
@@ -274,12 +326,17 @@ export const InstagramDashboard = () => {
                 comments: [
                   ...post.comments,
                   {
-                    user: user.username, // Optimistic update with current user's name
-                    text: text
+                    user: user.username,
+                    text: text,
+                    _id: res.data.commentId,
+                    likesCount: 1,
+                    isLiked: true
                   }
                 ]
               };
             }
+
+            console.log(res.data.commentId);
             return post;
           })
         );
@@ -655,6 +712,27 @@ export const InstagramDashboard = () => {
       color: '#8e8e8e',
       fontSize: '14px',
     },
+    commentContainer: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: '4px',
+    },
+    commentContent: {
+      fontSize: '14px',
+      flex: 1,
+      marginRight: '8px',
+    },
+    commentLikeBtn: {
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      fontSize: '10px',
+      padding: '0',
+    },
+    commentLiked: {
+      // styles handled by icon
+    },
   };
 
   const logoutButton = () => {
@@ -819,8 +897,17 @@ export const InstagramDashboard = () => {
                     </div>
 
                     {post.comments.slice(0, 2).map((comment, idx) => (
-                      <div key={idx} style={styles.comment}>
-                        <span style={styles.commentUser}>{comment.user || comment.username}</span> {comment.text || comment.content}
+                      <div key={idx} style={styles.commentContainer}>
+                        <div style={styles.commentContent}>
+                          <span style={styles.commentUser}>{comment.user || comment.username}</span> {comment.text || comment.content}
+                        </div>
+                        <button
+                          style={{ ...styles.commentLikeBtn, ...(comment.isLiked ? styles.commentLiked : {}) }}
+                          onClick={() => handleLikeComment(post.profileId, post.id, comment._id)}
+                        >
+                          {comment.isLiked ? '❤️' : '🤍'}
+                          <span style={{ marginLeft: '4px' }}>{comment.likesCount}</span>
+                        </button>
                       </div>
                     ))}
                   </>

@@ -471,7 +471,7 @@ routers.get("/everyPosts", protect, async (req, res) => {  // ✅ Added protect
 
         const profiles = await Profile.find({})
             .populate("user", "username email")
-            .populate("posts.comments.commentedBy", "username") // ✅ Populate comment authors
+            .populate("posts.comments.commentedBy posts.comments.likedBy", "username") // ✅ Populate comment authors
             .select("posts user profilePicture");
 
 
@@ -504,9 +504,12 @@ routers.get("/everyPosts", protect, async (req, res) => {  // ✅ Added protect
 
 
                     comments: post.comments.map(comment => ({
+                        _id: comment._id,
                         text: comment.text,
                         user: comment.commentedBy?.username || "Unknown", // ✅ Map username
-                        createdAt: comment.createdAt
+                        createdAt: comment.createdAt,
+                        likesCount: comment.likedBy?.length || 0,
+                        isLiked: comment.likedBy?.some(id => id.toString() === currentUserId.toString()) || false
                     }))
                 };
             })
@@ -598,21 +601,44 @@ routers.post("/profile/:userId/comment/:postsId/:profileId", protect, async (req
 
     postsData.comments.push({
         commentedBy: userId,
-        text: commentsText
+        text: commentsText,
+        likedBy: userId
     });
+
     await profile.save();
 
-    return res.status(200).json({ comments: commentsText, postsId: postsId, userId: userId });
+    console.log(postsData.comments[postsData.comments.length - 1]._id);
+
+    return res.status(200).json({ comments: commentsText, postsId: postsId, userId: userId, commentId: postsData.comments[postsData.comments.length - 1]._id });
 
 
 });
 
+routers.post("/profile/:userId/comment/:postsId/:profileId/:commentId/like", protect, async (req, res) => {
 
+    const userId = req.user._id;
 
+    const { postsId, profileId, commentId } = req.params;
 
+    const profile = await Profile.findById(profileId);
 
+    const postsData = profile.posts.id(postsId);
 
+    const commentData = postsData.comments.id(commentId);
 
+    const alreadyLiked = commentData.likedBy.some(id => String(id) === String(userId));
+
+    if (alreadyLiked) {
+        commentData.likedBy = commentData.likedBy.filter(id => String(id) !== String(userId));
+    } else {
+        commentData.likedBy.push(userId);
+    }
+
+    await profile.save();
+
+    return res.status(200).json({ likedBy: commentData.likedBy?.length });
+
+});
 
 
 export default routers;
