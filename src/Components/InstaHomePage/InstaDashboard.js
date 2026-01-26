@@ -93,7 +93,7 @@ export const InstagramDashboard = () => {
   const [likeLoading, setLikeLoading] = useState({});
   const [commentText, setCommentText] = useState({}); // State for comment inputs
 
-  const [showComments,setShowComments] =useState(false);
+  const [showComments, setShowComments] = useState({});
 
   // Fetch all posts from everyone
   useEffect(() => {
@@ -895,33 +895,41 @@ export const InstagramDashboard = () => {
                     {post.caption}
                   </div>
                 )}
-                {post.comments && post.comments.length > 0 && (
-                  <>
-                    <div style={styles.viewComments}>
-                      View all {post.comments.length} comments
-                    
-                    
 
-                   
-                    
-                    </div>
+                <button onClick={() => setShowComments(prev => ({ ...prev, [post.id]: !prev[post.id] }))} style={styles.viewComments}> View All Comments</button>
 
-                    {post.comments.slice(0, 10).map((comment, idx) => (
-                      <div key={idx} style={styles.commentContainer}>
-                        <div style={styles.commentContent}>
-                          <span style={styles.commentUser}>{comment.user || comment.username}</span> {comment.text || comment.content}
+
+                {
+
+                  showComments[post.id] ? (
+                    post.comments && post.comments.length > 0 && (
+                      <>
+                        <div style={styles.viewComments}>
+                          View all {post.comments.length} comments
                         </div>
-                        <button
-                          style={{ ...styles.commentLikeBtn, ...(comment.isLiked ? styles.commentLiked : {}) }}
-                          onClick={() => handleLikeComment(post.profileId, post.id, comment._id)}
-                        >
-                          {comment.isLiked ? '❤️' : '🤍'}
-                          <span style={{ marginLeft: '4px' }}>{comment.likesCount}</span>
-                        </button>
-                      </div>
-                    ))}
-                  </>
-                )}
+
+                        {post.comments.slice(0, 10).map((comment, idx) => (
+                          <div key={idx} style={styles.commentContainer}>
+                            <div style={styles.commentContent}>
+                              <span style={styles.commentUser}>{comment.user || comment.username}</span> {comment.text || comment.content}
+                            </div>
+                            <button
+                              style={{ ...styles.commentLikeBtn, ...(comment.isLiked ? styles.commentLiked : {}) }}
+                              onClick={() => handleLikeComment(post.profileId, post.id, comment._id)}
+                            >
+                              {comment.isLiked ? '❤️' : '🤍'}
+                              <span style={{ marginLeft: '4px' }}>{comment.likesCount}</span>
+                            </button>
+                          </div>
+                        ))}
+                      </>
+                    )
+                  ) : ""
+
+
+                }
+
+
                 <div style={styles.postTime}>{post.time}</div>
               </div>
 
