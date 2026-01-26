@@ -93,6 +93,8 @@ export const InstagramDashboard = () => {
   const [likeLoading, setLikeLoading] = useState({});
   const [commentText, setCommentText] = useState({}); // State for comment inputs
 
+  const [showComments,setShowComments] =useState(false);
+
   // Fetch all posts from everyone
   useEffect(() => {
     const fetchAllPosts = async () => {
@@ -203,6 +205,9 @@ export const InstagramDashboard = () => {
         // Update with actual server data if needed, or rely on optimistic if simple toggle
         // The backend returns { likedBy: length }
         const newLikesCount = res.data.likedBy;
+
+
+
 
         setPosts(prev => prev.map(post => {
           if (post.id === postId) {
@@ -894,9 +899,14 @@ export const InstagramDashboard = () => {
                   <>
                     <div style={styles.viewComments}>
                       View all {post.comments.length} comments
+                    
+                    
+
+                   
+                    
                     </div>
 
-                    {post.comments.slice(0, 2).map((comment, idx) => (
+                    {post.comments.slice(0, 10).map((comment, idx) => (
                       <div key={idx} style={styles.commentContainer}>
                         <div style={styles.commentContent}>
                           <span style={styles.commentUser}>{comment.user || comment.username}</span> {comment.text || comment.content}

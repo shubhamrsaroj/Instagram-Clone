@@ -449,7 +449,6 @@ routers.delete("/profile/:profileId/posts/:postsId", async (req, res) => {
         //$pull: { arrayName: { key: value } }
         return res.status(200).json({ message: "posts deleted successfully" });
 
-
     }
     catch (err) {
         console.log(err);
@@ -473,7 +472,6 @@ routers.get("/everyPosts", protect, async (req, res) => {  // ✅ Added protect
             .populate("user", "username email")
             .populate("posts.comments.commentedBy posts.comments.likedBy", "username") // ✅ Populate comment authors
             .select("posts user profilePicture");
-
 
 
         const allPosts = profiles.flatMap(profile =>
