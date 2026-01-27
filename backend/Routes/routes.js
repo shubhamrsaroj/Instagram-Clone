@@ -287,9 +287,9 @@ routers.put("/profile/:profileId/posts/:postsId/", async (req, res) => {
 
 
     const updatedCaption = await Profile.findOneAndUpdate(
+
         { _id: profileId, "posts._id": postsId },
         { $set: { "posts.$.caption": caption, "posts.$.likes": likes } },
-
         { new: true }
 
     );
@@ -366,9 +366,6 @@ routers.get("/profileId/:profileId/postsData/:postId", protect, async (req, res)
         path: "posts.likedBy",
         select: "username"
     });
-
-
-
 
     console.log(myProfileData);
 
@@ -455,9 +452,6 @@ routers.delete("/profile/:profileId/posts/:postsId", async (req, res) => {
     }
 });
 
-
-
-
 //sabse pehle mai ye check karunga ki  current user ka id lunga
 //uska baad mai populate aur select karunga user , ko uske andar user aur username 
 //jaise profile ke andar posts profilePicture user hai ,
@@ -472,7 +466,6 @@ routers.get("/everyPosts", protect, async (req, res) => {  // ✅ Added protect
             .populate("user", "username email")
             .populate("posts.comments.commentedBy posts.comments.likedBy", "username") // ✅ Populate comment authors
             .select("posts user profilePicture");
-
 
         const allPosts = profiles.flatMap(profile =>
             profile.posts.map(post => {
@@ -507,7 +500,8 @@ routers.get("/everyPosts", protect, async (req, res) => {  // ✅ Added protect
                         user: comment.commentedBy?.username || "Unknown", // ✅ Map username
                         createdAt: comment.createdAt,
                         likesCount: comment.likedBy?.length || 0,
-                        isLiked: comment.likedBy?.some(id => id.toString() === currentUserId.toString()) || false
+                        isLiked: comment.likedBy?.some(id => id.toString() === currentUserId.toString()) || false,
+                        likedComment: comment.likedBy?._id
                     }))
                 };
             })
@@ -609,7 +603,6 @@ routers.post("/profile/:userId/comment/:postsId/:profileId", protect, async (req
 
     return res.status(200).json({ comments: commentsText, postsId: postsId, userId: userId, commentId: postsData.comments[postsData.comments.length - 1]._id });
 
-
 });
 
 routers.post("/profile/:userId/comment/:postsId/:profileId/:commentId/like", protect, async (req, res) => {
@@ -631,12 +624,11 @@ routers.post("/profile/:userId/comment/:postsId/:profileId/:commentId/like", pro
     } else {
         commentData.likedBy.push(userId);
     }
-
     await profile.save();
-
     return res.status(200).json({ likedBy: commentData.likedBy?.length });
 
 });
+
 
 
 export default routers;

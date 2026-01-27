@@ -24,6 +24,7 @@ const Profile = new mongoose.Schema({
     phoneNo: {
         type: String
     },
+
     profilePicture: {
         type: String
     },
@@ -92,7 +93,20 @@ const Profile = new mongoose.Schema({
         createdAt: {
             type: String,
             default: Date.now()
-        }
+        },
+
+        stories:[{
+            image:{
+                type:String
+            },
+            storyCaption:{
+                type:String
+            },
+            createdAt:{
+                type:Date,
+                default:Date.now()
+            }
+        }]
 
     }]
 
