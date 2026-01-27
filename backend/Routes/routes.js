@@ -630,6 +630,47 @@ routers.post("/profile/:userId/comment/:postsId/:profileId/:commentId/like", pro
 });
 
 
+routers.post("/stories/:userId",async(req,res)=>{
+
+
+    const userId = req.user._id;
+
+    const {captionText} = req.body;
+
+    const myStory = req.file.path;
+
+
+    const profile = await Profile.findOne({user:userId});
+
+
+    const newStory = {
+
+        image:myStory,
+        storyCaption:captionText
+
+    };
+
+    profile.stories.unshift(newStory);
+
+    await profile.save();
+
+    return res.status(200).json({message:"Successfully posted Story"});
+
+
+
+});
+
+
+routers.get("/story/:userId",async(req,res)=>{
+
+    const userId = req.user._id;
+
+
+    const myprofile = await Profile.findOne({user:userId});
+
+    return res.status(200).json({stories:myprofile.stories});
+
+});
 
 export default routers;
 
