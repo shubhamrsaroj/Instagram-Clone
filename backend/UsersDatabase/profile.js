@@ -95,22 +95,25 @@ const Profile = new mongoose.Schema({
             default: Date.now()
         },
 
-        stories:[{
-            image:{
-                type:String
-            },
-            storyCaption:{
-                type:String
-            },
-            createdAt:{
-                type:Date,
-                default:Date.now()
-            },
-            userId:{
-                type:mongoose.Schema.Types.ObjectId
-            }
-        }]
 
+
+    }],
+
+    stories: [{
+        image: {
+            type: [String]
+        },
+        storyCaption: {
+            type: String
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now
+        },
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Users"
+        }
     }]
 
 });

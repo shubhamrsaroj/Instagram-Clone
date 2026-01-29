@@ -58,6 +58,8 @@ export const InstagramDashboard = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+
+
   useEffect(() => {
     const fetchdata = async () => {
       try {
@@ -156,16 +158,43 @@ export const InstagramDashboard = () => {
     }
   };
 
-  const [stories] = useState([
-    { id: 1, username: 'your_story', avatar: 'https://i.pravatar.cc/150?img=11', isYours: true },
-    { id: 2, username: 'sarah_smith', avatar: 'https://i.pravatar.cc/150?img=5', hasNew: true },
-    { id: 3, username: 'mike_wilson', avatar: 'https://i.pravatar.cc/150?img=12', hasNew: true },
-    { id: 4, username: 'emma_jones', avatar: 'https://i.pravatar.cc/150?img=9', hasNew: true },
-    { id: 5, username: 'alex_brown', avatar: 'https://i.pravatar.cc/150?img=15', hasNew: false },
-    { id: 6, username: 'lisa_davis', avatar: 'https://i.pravatar.cc/150?img=25', hasNew: true },
-    { id: 7, username: 'chris_lee', avatar: 'https://i.pravatar.cc/150?img=33', hasNew: false },
+  const [stories, setStories] = useState([
+    { id: 'my_story', username: 'Your Story', avatar: '', isYours: true, hasNew: false }
   ]);
 
+  const [myStories, setMyStories] = useState([]);
+
+  const fetchMyStories = async () => {
+    try {
+      const res = await api.get("/auth/story");
+      if (res.data.stories) {
+        setMyStories(res.data.stories);
+
+        // Update the main stories list to reflect if we have stories
+        setStories(prev => prev.map(s =>
+          s.isYours ? { ...s, hasNew: res.data.stories.length > 0, avatar: getImageUrl(user.avatar) } : s
+        ));
+      }
+    } catch (err) {
+      console.error("Failed to fetch stories", err);
+    }
+  };
+
+  useEffect(() => {
+    if (user.id) {
+      fetchMyStories();
+    }
+  }, [user.id]); // Re-fetch when user loads
+
+
+
+  // Story Modal State
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showViewerModal, setShowViewerModal] = useState(false);
+  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
+
+  const [images, setImages] = useState([]);
+  const [captionStory, setCaptionStory] = useState("");
   const [suggestions] = useState([
     { id: 1, username: 'nature_shots', avatar: 'https://i.pravatar.cc/150?img=20', followedBy: 'sarah_smith' },
     { id: 2, username: 'urban_explorer', avatar: 'https://i.pravatar.cc/150?img=22', followedBy: 'mike_wilson' },
@@ -173,8 +202,65 @@ export const InstagramDashboard = () => {
     { id: 4, username: 'music_vibes', avatar: 'https://i.pravatar.cc/150?img=35', followedBy: 'alex_brown' },
   ]);
 
+  const handleStoryClick = (story) => {
+    if (story.isYours) {
+      if (myStories.length > 0) {
+        setShowViewerModal(true);
+        setCurrentStoryIndex(0);
+      } else {
+        setShowUploadModal(true);
+      }
+    } else {
+      // Logic for other users' stories would go here
+      console.log("Clicked other user story");
+    }
+  };
+
+  const nextStory = () => {
+    if (currentStoryIndex < myStories.length - 1) {
+      setCurrentStoryIndex(prev => prev + 1);
+    } else {
+      setShowViewerModal(false); // Close if last story
+    }
+  };
+
+  const prevStory = () => {
+    if (currentStoryIndex > 0) {
+      setCurrentStoryIndex(prev => prev - 1);
+    }
+  };
 
 
+
+  const postStory = async () => {
+
+    try {
+
+      const formData = new FormData();
+
+
+      formData.append("captionText", captionStory);
+      images.forEach((image) => {
+        formData.append("image", image); // backend key name
+      });
+
+      const mystory = await api.post("/auth/stories", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setShowUploadModal(false);
+      setCaptionStory("");
+      setImages([]);
+
+      fetchMyStories();
+
+      console.log(mystory.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
 
   const handleLikeComment = async (profileId, postId, commentId) => {
@@ -738,6 +824,158 @@ export const InstagramDashboard = () => {
     commentLiked: {
       // styles handled by icon
     },
+    // New Modal Styles
+    modalOverlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.85)',
+      zIndex: 1000,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    uploadModalContent: {
+      backgroundColor: '#fff',
+      borderRadius: '12px',
+      padding: '20px',
+      width: '400px',
+      maxWidth: '90%',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '15px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    },
+    modalHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderBottom: '1px solid #dbdbdb',
+      paddingBottom: '10px',
+      marginBottom: '10px',
+    },
+    modalTitle: {
+      fontWeight: '600',
+      fontSize: '16px',
+      textAlign: 'center',
+      flex: 1,
+    },
+    closeBtn: {
+      background: 'none',
+      border: 'none',
+      fontSize: '24px',
+      cursor: 'pointer',
+      padding: 0,
+    },
+    fileInputWrapper: {
+      textAlign: 'center',
+      padding: '40px',
+      border: '2px dashed #dbdbdb',
+      borderRadius: '8px',
+      cursor: 'pointer',
+    },
+    captionInput: {
+      width: '100%',
+      padding: '10px',
+      border: '1px solid #dbdbdb',
+      borderRadius: '4px',
+      fontSize: '14px',
+      outline: 'none',
+    },
+    primaryBtn: {
+      backgroundColor: '#0095f6',
+      color: '#fff',
+      border: 'none',
+      borderRadius: '4px',
+      padding: '8px 16px',
+      fontWeight: '600',
+      cursor: 'pointer',
+      width: '100%',
+    },
+    viewerOverlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: '#1a1a1a',
+      zIndex: 2000,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    viewerContent: {
+      position: 'relative',
+      height: '100%',
+      width: '100%',
+      maxWidth: '500px', // Mobile ratio
+      display: 'flex',
+      justifyContent: 'center',
+      flexDirection: 'column',
+    },
+    storyImageFull: {
+      width: '100%',
+      height: '80%',
+      objectFit: 'contain',
+    },
+    viewerHeader: {
+      position: 'absolute',
+      top: '20px',
+      left: '10px',
+      right: '10px',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      zIndex: 10,
+    },
+    viewerUser: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      color: '#fff',
+    },
+    progressBarContainer: {
+      position: 'absolute',
+      top: '10px',
+      left: '10px',
+      right: '10px',
+      display: 'flex',
+      gap: '5px',
+      zIndex: 10,
+    },
+    progressBarBg: {
+      flex: 1,
+      height: '2px',
+      backgroundColor: 'rgba(255,255,255,0.3)',
+      borderRadius: '2px',
+      overflow: 'hidden',
+    },
+    progressBarFill: {
+      height: '100%',
+      backgroundColor: '#fff',
+      // Simple animation could go here, but doing static for now
+      width: '100%',
+    },
+    navAreaLeft: {
+      position: 'absolute',
+      top: '50px',
+      bottom: '0',
+      left: '0',
+      width: '30%',
+      cursor: 'pointer',
+      zIndex: 5,
+    },
+    navAreaRight: {
+      position: 'absolute',
+      top: '50px',
+      bottom: '0',
+      right: '0',
+      width: '30%',
+      cursor: 'pointer',
+      zIndex: 5,
+    },
   };
 
   const logoutButton = () => {
@@ -789,16 +1027,26 @@ export const InstagramDashboard = () => {
           {/* Stories */}
           <div style={styles.storiesContainer}>
             {stories.map((story) => (
-              <div key={story.id} style={styles.storyItem}>
+              <div key={story.id} style={styles.storyItem} onClick={() => handleStoryClick(story)}>
                 <div style={story.isYours ? styles.addStory : null}>
                   <div style={story.hasNew || story.isYours ? styles.storyRing : styles.storyRingNoNew}>
                     <img
-                      src={getImageUrl(user.avatar)}
+                      src={story.isYours ? getImageUrl(user.avatar) : story.avatar}
                       alt={story.username}
                       style={styles.storyAvatar}
                     />
                   </div>
-                  {story.isYours && <span style={styles.addIcon}>+</span>}
+                  {story.isYours && (
+                    <span
+                      style={styles.addIcon}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent opening viewer
+                        setShowUploadModal(true);
+                      }}
+                    >
+                      +
+                    </span>
+                  )}
                 </div>
                 <span style={styles.storyUsername}>
                   {story.isYours ? 'Your Story' : story.username}
@@ -925,8 +1173,6 @@ export const InstagramDashboard = () => {
                       </>
                     )
                   ) : ""
-
-
                 }
 
 
@@ -1011,6 +1257,108 @@ export const InstagramDashboard = () => {
           </div>
         </aside>
       </main>
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div style={styles.modalOverlay} onClick={(e) => {
+          if (e.target === e.currentTarget) setShowUploadModal(false)
+        }}>
+          <div style={styles.uploadModalContent}>
+            <div style={styles.modalHeader}>
+              <div style={styles.modalTitle}>Create New Story</div>
+              <button style={styles.closeBtn} onClick={() => setShowUploadModal(false)}>×</button>
+            </div>
+
+            <label style={styles.fileInputWrapper}>
+              <div>{images.length > 0 ? `${images.length} images selected` : "Drag photos and videos here"}</div>
+              <input
+                type="file"
+                multiple
+                style={{ display: 'none' }}
+                onChange={(e) => setImages([...e.target.files])}
+              />
+            </label>
+
+            {images.length > 0 && (
+              <div style={{ display: 'flex', gap: '5px', overflowX: 'auto' }}>
+                {/* Simple preview logic could go here */}
+              </div>
+            )}
+
+            <input
+              type="text"
+              placeholder="Add a caption..."
+              value={captionStory}
+              onChange={(e) => setCaptionStory(e.target.value)}
+              style={styles.captionInput}
+            />
+
+            <button style={styles.primaryBtn} onClick={postStory} disabled={images.length === 0}>
+              Share to Story
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Story Viewer Modal */}
+      {showViewerModal && myStories.length > 0 && (
+        <div style={styles.viewerOverlay}>
+          <div style={styles.viewerContent}>
+            {/* Header */}
+            <div style={styles.viewerHeader}>
+              <div style={styles.viewerUser}>
+                <img src={getImageUrl(user.avatar)} style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                <span style={{ fontWeight: '600', fontSize: '14px' }}>Your Story</span>
+                <span style={{ fontSize: '12px', opacity: 0.7 }}>
+                  {myStories[currentStoryIndex] && formatTime(myStories[currentStoryIndex].createdAt)}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                <button
+                  style={{ color: '#fff', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}
+                  onClick={() => { setShowViewerModal(false); setShowUploadModal(true); }}
+                  title="Add to Story"
+                >
+                  +
+                </button>
+                <button style={{ color: '#fff', background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }} onClick={() => setShowViewerModal(false)}>×</button>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div style={styles.progressBarContainer}>
+              {myStories.map((_, idx) => (
+                <div key={idx} style={styles.progressBarBg}>
+                  <div style={{
+                    ...styles.progressBarFill,
+                    width: idx < currentStoryIndex ? '100%' : idx === currentStoryIndex ? '100%' : '0%' // active is full for static, ideally animated
+                  }}></div>
+                </div>
+              ))}
+            </div>
+
+            {/* Main Image */}
+            {myStories[currentStoryIndex] && myStories[currentStoryIndex].image && (
+              <img
+                src={getImageUrl(myStories[currentStoryIndex].image[0])} // Assuming single image for now per story or first of array
+                style={styles.storyImageFull}
+              />
+            )}
+
+            {/* Caption Overlay */}
+            {myStories[currentStoryIndex] && myStories[currentStoryIndex].storyCaption && (
+              <div style={{ position: 'absolute', bottom: '10%', left: '0', right: '0', textAlign: 'center', color: '#fff', padding: '20px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
+                {myStories[currentStoryIndex].storyCaption}
+              </div>
+            )}
+
+            {/* Navigation Click Areas */}
+            <div style={styles.navAreaLeft} onClick={prevStory}></div>
+            <div style={styles.navAreaRight} onClick={nextStory}></div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

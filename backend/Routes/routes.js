@@ -630,23 +630,23 @@ routers.post("/profile/:userId/comment/:postsId/:profileId/:commentId/like", pro
 });
 
 
-routers.post("/stories/:userId",async(req,res)=>{
+routers.post("/stories", protect, upload.array("image", 10), async (req, res) => {
 
 
     const userId = req.user._id;
 
-    const {captionText} = req.body;
+    let { captionText, images } = req.body;
 
-    const myStory = req.file.path;
+    images = req.files.map(file => file.path);
 
 
-    const profile = await Profile.findOne({user:userId});
+    const profile = await Profile.findOne({ user: userId });
 
 
     const newStory = {
 
-        image:myStory,
-        storyCaption:captionText
+        image: images,
+        storyCaption: captionText
 
     };
 
@@ -654,23 +654,23 @@ routers.post("/stories/:userId",async(req,res)=>{
 
     await profile.save();
 
-    return res.status(200).json({message:"Successfully posted Story"});
+    return res.status(200).json({ message: "Successfully posted Story" });
 
 
 
 });
 
 
-routers.get("/story/:userId",async(req,res)=>{
+routers.get("/story", protect, async (req, res) => {
 
     const userId = req.user._id;
 
+    const myprofile = await Profile.findOne({ user: userId });
 
-    const myprofile = await Profile.findOne({user:userId});
-
-    return res.status(200).json({stories:myprofile.stories});
+    return res.status(200).json({ stories: myprofile.stories });
 
 });
+
 
 export default routers;
 
