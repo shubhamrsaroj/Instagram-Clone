@@ -106,6 +106,10 @@ const Profile = new mongoose.Schema({
         storyCaption: {
             type: String
         },
+        music: {
+            type: String,
+            default: ""
+        },
         createdAt: {
             type: Date,
             default: Date.now

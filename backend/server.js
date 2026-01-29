@@ -20,7 +20,8 @@ apis.use(
     })
 );
 
-apis.use(express.json());
+apis.use(express.json({ limit: "50mb" }));
+apis.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 const files = fileURLToPath(import.meta.url);
 

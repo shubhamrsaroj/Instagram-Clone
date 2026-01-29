@@ -30,15 +30,34 @@ const routers = express.Router();
 
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
-    params: {
-        folder: "instagram_clone", // folder name in cloudinary
-        allowed_formats: ["jpg", "png", "jpeg", "webp"],
+    params: async (req, file) => {
+        const ext = file.originalname.split('.').pop().toLowerCase();
+        const isAudioOrVideo = file.mimetype.startsWith('audio') || file.mimetype.startsWith('video') || ['mp3', 'wav', 'm4a'].includes(ext);
+
+        console.log(`☁️ Cloudinary: File=${file.originalname} Mime=${file.mimetype} DetectedAs=${isAudioOrVideo ? 'video' : 'image'}`);
+
+        if (isAudioOrVideo) {
+            return {
+                folder: "instagram_clone",
+                resource_type: "video"
+            };
+        } else {
+            return {
+                folder: "instagram_clone",
+                allowed_formats: ["jpg", "png", "jpeg", "webp"],
+                resource_type: "image"
+            };
+        }
     },
 });
 
 
-const upload = multer({ storage });
+const upload = multer({
+    storage,
+    limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit
+});
 
+console.log("✅ Multer Config Loaded with 100MB Limit");
 
 routers.post("/register", async (req, res) => {
 
@@ -310,8 +329,6 @@ routers.put("/profile/:profileId/posts/:postsId/", async (req, res) => {
 //uske andar , url me postId nahi hai 
 //toh kaha se wo data dikhega jaise wo caption dikhe hai 
 //waise like bhi dikhega 
-
-
 
 routers.post("/profile/:profileId/:postId/like", protect, async (req, res) => {
 
@@ -630,33 +647,63 @@ routers.post("/profile/:userId/comment/:postsId/:profileId/:commentId/like", pro
 });
 
 
-routers.post("/stories", protect, upload.array("image", 10), async (req, res) => {
+routers.post("/stories", protect, (req, res, next) => {
+    const uploadMiddleware = upload.fields([{ name: 'image', maxCount: 10 }, { name: 'music', maxCount: 1 }]);
+    uploadMiddleware(req, res, (err) => {
+        if (err) {
+            console.error("Cloudinary/Multer Upload Error:", err);
+            return res.status(400).json({ message: "File upload failed", error: err.message || err });
+        }
+        next();
+    });
+}, async (req, res) => {
+
+    try {
+        const userId = req.user._id;
+
+        let { captionText } = req.body;
+
+        // Handle images
+        let images = [];
+        if (req.files && req.files['image']) {
+            images = req.files['image'].map(file => file.path);
+        }
+
+        // Handle music
+        let music = "";
+        if (req.files && req.files['music']) {
+            music = req.files['music'][0].path;
+        }
 
 
-    const userId = req.user._id;
+        const profile = await Profile.findOne({ user: userId });
 
-    let { captionText, images } = req.body;
+        if (!profile) {
+            return res.status(404).json({ message: "Profile not found" });
+        }
 
-    images = req.files.map(file => file.path);
+        const newStory = {
 
+            image: images,
+            storyCaption: captionText,
+            music: music
 
-    const profile = await Profile.findOne({ user: userId });
+        };
 
+        if (!profile.stories) {
+            profile.stories = [];
+        }
 
-    const newStory = {
+        profile.stories.unshift(newStory);
 
-        image: images,
-        storyCaption: captionText
+        await profile.save();
 
-    };
+        return res.status(200).json({ message: "Successfully posted Story" });
 
-    profile.stories.unshift(newStory);
-
-    await profile.save();
-
-    return res.status(200).json({ message: "Successfully posted Story" });
-
-
+    } catch (err) {
+        console.error("Story Route Error:", err);
+        return res.status(500).json({ message: "Internal server error", error: err.message });
+    }
 
 });
 

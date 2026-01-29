@@ -194,7 +194,10 @@ export const InstagramDashboard = () => {
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
 
   const [images, setImages] = useState([]);
+  const [musicFile, setMusicFile] = useState(null); // New state for music
   const [captionStory, setCaptionStory] = useState("");
+  const [isPlaying, setIsPlaying] = useState(false); // Audio playback state
+  const [audioRef, setAudioRef] = useState(null); // Reference to audio element
   const [suggestions] = useState([
     { id: 1, username: 'nature_shots', avatar: 'https://i.pravatar.cc/150?img=20', followedBy: 'sarah_smith' },
     { id: 2, username: 'urban_explorer', avatar: 'https://i.pravatar.cc/150?img=22', followedBy: 'mike_wilson' },
@@ -230,11 +233,36 @@ export const InstagramDashboard = () => {
     }
   };
 
+  const togglePlayPause = () => {
+    if (audioRef) {
+      if (isPlaying) {
+        audioRef.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
 
 
   const postStory = async () => {
 
     try {
+
+      // Debug logging
+      console.log("🎵 Music File:", musicFile);
+      if (musicFile) {
+        console.log("📊 File Size:", musicFile.size, "bytes");
+        console.log("📊 File Size (MB):", (musicFile.size / (1024 * 1024)).toFixed(2), "MB");
+      }
+
+      // Validate music file size (10MB limit for Cloudinary free tier)
+      if (musicFile && musicFile.size > 10 * 1024 * 1024) {
+        alert(`❌ Audio file is too large (${(musicFile.size / (1024 * 1024)).toFixed(2)}MB).\n\nCloudinary's free tier has a 10MB limit for audio files.\n\nPlease:\n• Choose a shorter audio clip\n• Compress the audio file\n• Use a different song`);
+        return;
+      }
 
       const formData = new FormData();
 
@@ -244,21 +272,32 @@ export const InstagramDashboard = () => {
         formData.append("image", image); // backend key name
       });
 
+      if (musicFile) {
+        formData.append("music", musicFile);
+      }
+
+      console.log("📤 Uploading story...");
+
       const mystory = await api.post("/auth/stories", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
+      console.log("✅ Story uploaded successfully!");
+
       setShowUploadModal(false);
       setCaptionStory("");
       setImages([]);
+      setMusicFile(null);
 
       fetchMyStories();
 
       console.log(mystory.data);
     } catch (err) {
-      console.log(err);
+      console.error("❌ Upload Error:", err);
+      console.error("❌ Error Response:", err.response?.data);
+      alert("❌ Failed to upload story. Please try again.");
     }
   };
 
@@ -976,6 +1015,52 @@ export const InstagramDashboard = () => {
       cursor: 'pointer',
       zIndex: 5,
     },
+    musicPlayerOverlay: {
+      position: 'absolute',
+      bottom: '15%',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      backdropFilter: 'blur(10px)',
+      padding: '12px 20px',
+      borderRadius: '30px',
+      zIndex: 15,
+      color: '#fff',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+    },
+    musicIcon: {
+      fontSize: '20px',
+      animation: 'pulse 1.5s ease-in-out infinite',
+    },
+    playPauseBtn: {
+      background: 'rgba(255, 255, 255, 0.2)',
+      border: 'none',
+      borderRadius: '50%',
+      width: '36px',
+      height: '36px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer',
+      fontSize: '16px',
+      color: '#fff',
+      transition: 'all 0.2s',
+    },
+    musicWaveform: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '3px',
+      height: '20px',
+    },
+    waveBar: {
+      width: '3px',
+      backgroundColor: '#fff',
+      borderRadius: '2px',
+      animation: 'wave 1s ease-in-out infinite',
+    },
   };
 
   const logoutButton = () => {
@@ -991,6 +1076,14 @@ export const InstagramDashboard = () => {
           @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+          }
+          @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+          }
+          @keyframes wave {
+            0%, 100% { height: 8px; }
+            50% { height: 16px; }
           }
         `}
       </style>
@@ -1278,6 +1371,16 @@ export const InstagramDashboard = () => {
               />
             </label>
 
+            <label style={styles.fileInputWrapper}>
+              <div>{musicFile ? musicFile.name : "Select a Song (Optional)"}</div>
+              <input
+                type="file"
+                accept="audio/*"
+                style={{ display: 'none' }}
+                onChange={(e) => setMusicFile(e.target.files[0])}
+              />
+            </label>
+
             {images.length > 0 && (
               <div style={{ display: 'flex', gap: '5px', overflowX: 'auto' }}>
                 {/* Simple preview logic could go here */}
@@ -1349,6 +1452,57 @@ export const InstagramDashboard = () => {
               <div style={{ position: 'absolute', bottom: '10%', left: '0', right: '0', textAlign: 'center', color: '#fff', padding: '20px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
                 {myStories[currentStoryIndex].storyCaption}
               </div>
+            )}
+
+            {/* Audio Player */}
+            {myStories[currentStoryIndex] && myStories[currentStoryIndex].music && (
+              <>
+                <audio
+                  ref={(el) => {
+                    setAudioRef(el);
+                    if (el) {
+                      el.onplay = () => setIsPlaying(true);
+                      el.onpause = () => setIsPlaying(false);
+                    }
+                  }}
+                  src={getImageUrl(myStories[currentStoryIndex].music)}
+                  autoPlay
+                  loop
+                  style={{ display: 'none' }}
+                  onError={(e) => console.log("Audio play failed", e)}
+                />
+
+                {/* Music Player UI Overlay */}
+                <div style={styles.musicPlayerOverlay}>
+                  <span style={styles.musicIcon}>🎵</span>
+
+                  {/* Animated Waveform */}
+                  {isPlaying && (
+                    <div style={styles.musicWaveform}>
+                      <div style={{ ...styles.waveBar, animationDelay: '0s' }}></div>
+                      <div style={{ ...styles.waveBar, animationDelay: '0.2s' }}></div>
+                      <div style={{ ...styles.waveBar, animationDelay: '0.4s' }}></div>
+                      <div style={{ ...styles.waveBar, animationDelay: '0.1s' }}></div>
+                      <div style={{ ...styles.waveBar, animationDelay: '0.3s' }}></div>
+                    </div>
+                  )}
+
+                  {/* Play/Pause Button */}
+                  <button
+                    style={styles.playPauseBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      togglePlayPause();
+                    }}
+                    onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.3)'}
+                    onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
+                  >
+                    {isPlaying ? '⏸' : '▶'}
+                  </button>
+
+                  <span style={{ fontSize: '12px', fontWeight: '500' }}>Music</span>
+                </div>
+              </>
             )}
 
             {/* Navigation Click Areas */}
