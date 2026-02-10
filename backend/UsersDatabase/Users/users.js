@@ -19,9 +19,11 @@ const Users = new mongoose.Schema({
     profile:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Profile"
-    }
+    },
+
 
 });
+
 
 
 export default mongoose.model("Users",Users);

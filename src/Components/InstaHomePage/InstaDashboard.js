@@ -167,6 +167,9 @@ export const InstagramDashboard = () => {
   const fetchMyStories = async () => {
     try {
       const res = await api.get("/auth/story");
+
+      console.log(res.data);
+
       if (res.data.stories) {
         setMyStories(res.data.stories);
 
@@ -179,6 +182,8 @@ export const InstagramDashboard = () => {
       console.error("Failed to fetch stories", err);
     }
   };
+
+
 
   useEffect(() => {
     if (user.id) {
@@ -301,7 +306,7 @@ export const InstagramDashboard = () => {
     }
   };
 
-
+  
   const handleLikeComment = async (profileId, postId, commentId) => {
     // Optimistic update
     setPosts(prev => prev.map(post => {
@@ -477,6 +482,40 @@ export const InstagramDashboard = () => {
       console.error("❌ Error posting comment:", error);
     }
   };
+
+
+  const[followers,setFollowers] = useState([]);
+
+
+  useEffect(()=>{
+
+    try{
+
+
+       const fetchData = async()=>{
+
+        const datas= await api.get("/auth/me");
+
+        const mydata = await api.get(`/auth/followersData/${datas.data.id}`);
+
+        const followersData = mydata.data.followingDatas;
+
+        setFollowers(followersData);
+
+       }
+
+       fetchData();
+
+    }
+    catch(err){
+
+      console.log(err);
+
+    }
+
+  },[]);
+
+
 
   // Styles
   const styles = {
@@ -1144,8 +1183,48 @@ export const InstagramDashboard = () => {
                 <span style={styles.storyUsername}>
                   {story.isYours ? 'Your Story' : story.username}
                 </span>
+
+                
               </div>
             ))}
+
+         {followers.map((follower) => (
+        <div key={follower._id} style={styles.storyItem}>
+          <div style={styles.storyRingNoNew}>
+           
+                 
+                 {
+
+                  follower.profilePicture ?
+
+                  (
+                    <img
+              src={getImageUrl(follower.profilePicture)}
+              alt={follower.username}
+              style={styles.storyAvatar}
+            />
+                  )
+                   :
+
+                   (
+                    <img
+              src={getImageUrl(user.avatar)}
+              alt={follower.username}
+              style={styles.storyAvatar}
+            />
+                   )
+                   
+
+                 }
+          </div>
+
+          <span style={styles.storyUsername}>
+            {follower.username}
+          </span>
+        </div>
+      ))}
+
+            
           </div>
 
           {/* Loading State */}

@@ -9,8 +9,11 @@ import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import dotenv from "dotenv";
+import { format } from "path";
+import { profile } from "console";
 
 dotenv.config();
+
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -18,12 +21,12 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+
 console.log("Cloudinary Config:", {
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY ? "Loaded" : "Missing",
     api_secret: process.env.CLOUDINARY_API_SECRET ? "Loaded" : "Missing"
 });
-
 
 
 const routers = express.Router();
@@ -40,7 +43,7 @@ const storage = new CloudinaryStorage({
             return {
                 folder: "instagram_clone",
                 resource_type: "video"
-            };
+            }; 
         } else {
             return {
                 folder: "instagram_clone",
@@ -49,7 +52,10 @@ const storage = new CloudinaryStorage({
             };
         }
     },
+
 });
+
+
 
 
 const upload = multer({
@@ -344,7 +350,7 @@ routers.post("/profile/:profileId/:postId/like", protect, async (req, res) => {
     //[{
     //userId:""
     //image:""
-    //likedBy:" " in this obejct id will be there 
+    //likedBy:" " in this objct id will be there 
     //}]
     //so first we have taken profile id and post id then we are searching for the postId ,through this see upper side
 
@@ -415,19 +421,28 @@ routers.get("/followersData/:profileId", protect, async (req, res) => {
 
     const profile = await Profile.findOne({ user: profileId }).populate({
         path: "followedBy",
-        select: "username"
+        select: "username",
+        populate:{
+            path:"profile",
+            select:"profilePicture"
+        }
     });
 
     const followingData = await Profile.findOne({ user: profileId }).populate({
         path: "following",
-        select: "username"
+        select: "username",
+        populate:{
+            path:"profile",
+            select:"profilePicture"
+        }
     });
 
 
     const followersData = profile.followedBy.map((user) =>
     ({
         _id: user._id,
-        username: user.username
+        username: user.username,
+        profilePicture:user.profile?.profilePicture
     }
     ));
 
@@ -437,10 +452,13 @@ routers.get("/followersData/:profileId", protect, async (req, res) => {
     const followingDatas = followingData.following.map((user) => ({
 
         _id: user._id,
-        username: user.username
+        username: user.username,
+        profilePicture:user.profile?.profilePicture
 
 
-    }))
+    }));
+
+    console.log(followingDatas);
 
     return res.status(200).json({ followersData: followersData, followingDatas: followingDatas });
 
@@ -648,6 +666,9 @@ routers.post("/profile/:userId/comment/:postsId/:profileId/:commentId/like", pro
 
 
 routers.post("/stories", protect, (req, res, next) => {
+
+
+
     const uploadMiddleware = upload.fields([{ name: 'image', maxCount: 10 }, { name: 'music', maxCount: 1 }]);
     uploadMiddleware(req, res, (err) => {
         if (err) {
@@ -656,7 +677,10 @@ routers.post("/stories", protect, (req, res, next) => {
         }
         next();
     });
-}, async (req, res) => {
+
+}, 
+
+async (req, res) => {
 
     try {
         const userId = req.user._id;
@@ -669,7 +693,8 @@ routers.post("/stories", protect, (req, res, next) => {
             images = req.files['image'].map(file => file.path);
         }
 
-        // Handle music
+
+                // Handle music
         let music = "";
         if (req.files && req.files['music']) {
             music = req.files['music'][0].path;
@@ -707,7 +732,6 @@ routers.post("/stories", protect, (req, res, next) => {
 
 });
 
-
 routers.get("/story", protect, async (req, res) => {
 
     const userId = req.user._id;
@@ -717,6 +741,28 @@ routers.get("/story", protect, async (req, res) => {
     return res.status(200).json({ stories: myprofile.stories });
 
 });
+
+routers.delete("/stories/:storiesId",protect,async(req,res)=>{
+    
+    const  userId = req.user._id;
+
+    const {storiesId} = req.params;
+
+    const myprofile = await Profile.findOne({user:userId});
+
+    await Profile.findByIdAndUpdate(
+
+        myprofile._id,
+        {$pull :{stories:{_id : storiesId}}},
+        {new:true}
+
+    );
+
+    return res.status(200).json({message:"Deleted stories successfully"});
+    
+});
+
+
 
 
 export default routers;

@@ -12,8 +12,6 @@ export const Register = () => {
   const navigate =useNavigate();
 
 
-
-
   //const [showOtp, setShowOtp] = useState(false);
   //const [otp, setOtp] = useState("");
 

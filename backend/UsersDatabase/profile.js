@@ -123,3 +123,4 @@ const Profile = new mongoose.Schema({
 });
 
 export default mongoose.model("Profile", Profile);
+
