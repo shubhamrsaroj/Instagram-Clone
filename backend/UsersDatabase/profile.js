@@ -94,7 +94,26 @@ const Profile = new mongoose.Schema({
             type: String,
             default: Date.now()
         },
+    }],
 
+    savedPosts: [{
+        
+        postId:{
+
+            type:mongoose.Schema.Types.ObjectId
+
+        },
+
+        ownerId:{
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"Users"
+        },
+
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
+        
 
 
     }],
@@ -118,9 +137,13 @@ const Profile = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: "Users"
         }
-    }]
+    }],
+
+    
 
 });
 
 export default mongoose.model("Profile", Profile);
+
+
 

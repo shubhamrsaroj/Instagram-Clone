@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../../Interceptor/api';
 import { IoLogOutOutline } from "react-icons/io5";
 
@@ -59,6 +59,9 @@ export const InstagramDashboard = () => {
   const [loading, setLoading] = useState(true);
 
 
+  const [userStoriesMap, setUserStoriesMap] = useState({});
+  const [viewingUserId, setViewingUserId] = useState(null);
+  const [viewingUserStories, setViewingUserStories] = useState(null);
 
   useEffect(() => {
     const fetchdata = async () => {
@@ -101,13 +104,12 @@ export const InstagramDashboard = () => {
   useEffect(() => {
     const fetchAllPosts = async () => {
       try {
+
+      
         setLoading(true);
-
-
         const response = await api.get("/auth/everyPosts");
-
-
-
+  
+  
         if (response.data.posts) {
           // Transform and shuffle posts
           const transformedPosts = response.data.posts.map(post => ({
@@ -119,7 +121,7 @@ export const InstagramDashboard = () => {
             image: getImageUrl(post.image),
             likes: post.likesCount || 0,
             liked: post.isLiked || false,
-            saved: false,
+            saved: post.isSaved || false,
             caption: post.caption || '',
             comments: post.comments || [],
             time: formatTime(post.createdAt),
@@ -165,15 +167,15 @@ export const InstagramDashboard = () => {
   const [myStories, setMyStories] = useState([]);
 
   const fetchMyStories = async () => {
-    try {
-      const res = await api.get("/auth/story");
 
-      console.log(res.data);
+    try {
+      const res = await api.get(`/auth/story/${user.id}`);
+
+      console.log("My stories:", res.data);
 
       if (res.data.stories) {
         setMyStories(res.data.stories);
 
-        // Update the main stories list to reflect if we have stories
         setStories(prev => prev.map(s =>
           s.isYours ? { ...s, hasNew: res.data.stories.length > 0, avatar: getImageUrl(user.avatar) } : s
         ));
@@ -181,6 +183,7 @@ export const InstagramDashboard = () => {
     } catch (err) {
       console.error("Failed to fetch stories", err);
     }
+
   };
 
 
@@ -210,19 +213,21 @@ export const InstagramDashboard = () => {
     { id: 4, username: 'music_vibes', avatar: 'https://i.pravatar.cc/150?img=35', followedBy: 'alex_brown' },
   ]);
 
+
+
   const handleStoryClick = (story) => {
     if (story.isYours) {
+      setViewingUserId(user.id);
+      setViewingUserStories(null);
       if (myStories.length > 0) {
         setShowViewerModal(true);
         setCurrentStoryIndex(0);
       } else {
         setShowUploadModal(true);
       }
-    } else {
-      // Logic for other users' stories would go here
-      console.log("Clicked other user story");
     }
   };
+
 
   const nextStory = () => {
     if (currentStoryIndex < myStories.length - 1) {
@@ -283,7 +288,7 @@ export const InstagramDashboard = () => {
 
       console.log("📤 Uploading story...");
 
-      const mystory = await api.post("/auth/stories", formData, {
+      const mystory = await api.post(`/auth/stories/${user.id}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -306,7 +311,7 @@ export const InstagramDashboard = () => {
     }
   };
 
-  
+
   const handleLikeComment = async (profileId, postId, commentId) => {
     // Optimistic update
     setPosts(prev => prev.map(post => {
@@ -335,9 +340,6 @@ export const InstagramDashboard = () => {
         // Update with actual server data if needed, or rely on optimistic if simple toggle
         // The backend returns { likedBy: length }
         const newLikesCount = res.data.likedBy;
-
-
-
 
         setPosts(prev => prev.map(post => {
           if (post.id === postId) {
@@ -433,7 +435,12 @@ export const InstagramDashboard = () => {
       setLikeLoading(prev => ({ ...prev, [postId]: false }));
     }
   };
-  const handleSave = (postId) => {
+  const handleSave = async (postId) => {
+
+    const userId = await api.get("/auth/me");
+
+    await api.post(`auth/savedPosts/${postId}/${userId.data.id}`);
+
     setPosts(posts.map(post =>
       post.id === postId ? { ...post, saved: !post.saved } : post
     ));
@@ -484,17 +491,44 @@ export const InstagramDashboard = () => {
   };
 
 
-  const[followers,setFollowers] = useState([]);
 
 
-  useEffect(()=>{
 
-    try{
+  const [followers, setFollowers] = useState([]);
 
+  // Add this new useEffect to fetch follower stories when followers are loaded
+  useEffect(() => {
+    const fetchFollowerStories = async () => {
+      if (followers.length > 0) {
+        const storiesMap = {};
 
-       const fetchData = async()=>{
+        for (const follower of followers) {
+          try {
+            const res = await api.get(`/auth/story/${follower._id}`);
+            if (res.data.stories && res.data.stories.length > 0) {
+              storiesMap[follower._id] = res.data.stories;
+              console.log(`✅ Stories found for ${follower.username}:`, res.data.stories);
+            }
+          } catch (err) {
+            console.log(`No stories for ${follower.username}`);
+          }
+        }
 
-        const datas= await api.get("/auth/me");
+        setUserStoriesMap(storiesMap);
+        console.log("📱 All follower stories:", storiesMap);
+      }
+    };
+
+    fetchFollowerStories();
+  }, [followers]); // Run when followers change
+
+  useEffect(() => {
+
+    try {
+
+      const fetchData = async () => {
+
+        const datas = await api.get("/auth/me");
 
         const mydata = await api.get(`/auth/followersData/${datas.data.id}`);
 
@@ -502,18 +536,18 @@ export const InstagramDashboard = () => {
 
         setFollowers(followersData);
 
-       }
+      }
 
-       fetchData();
+      fetchData();
 
     }
-    catch(err){
+    catch (err) {
 
       console.log(err);
 
     }
 
-  },[]);
+  }, []);
 
 
 
@@ -1184,47 +1218,49 @@ export const InstagramDashboard = () => {
                   {story.isYours ? 'Your Story' : story.username}
                 </span>
 
-                
+
               </div>
             ))}
 
-         {followers.map((follower) => (
-        <div key={follower._id} style={styles.storyItem}>
-          <div style={styles.storyRingNoNew}>
-           
-                 
-                 {
+            {followers.map((follower) => {
+              const hasStories = userStoriesMap[follower._id] && userStoriesMap[follower._id].length > 0;
 
-                  follower.profilePicture ?
+              return (
+                <div
+                  key={follower._id}
+                  style={styles.storyItem}
+                  onClick={() => {
+                    const stories = userStoriesMap[follower._id];
+                    if (stories && stories.length > 0) {
+                      setViewingUserId(follower._id);
+                      setViewingUserStories({ user: follower, stories: stories });
+                      setCurrentStoryIndex(0);
+                      setShowViewerModal(true);
+                    }
+                  }}
+                >
+                  <div style={hasStories ? styles.storyRing : styles.storyRingNoNew}>
+                    {follower.profilePicture ? (
+                      <img
+                        src={getImageUrl(follower.profilePicture)}
+                        alt={follower.username}
+                        style={styles.storyAvatar}
+                      />
+                    ) : (
+                      <img
+                        src={getImageUrl(user.avatar)}
+                        alt={follower.username}
+                        style={styles.storyAvatar}
+                      />
+                    )}
+                  </div>
+                  <span style={styles.storyUsername}>
+                    {follower.username}
+                  </span>
+                </div>
+              );
+            })}
 
-                  (
-                    <img
-              src={getImageUrl(follower.profilePicture)}
-              alt={follower.username}
-              style={styles.storyAvatar}
-            />
-                  )
-                   :
-
-                   (
-                    <img
-              src={getImageUrl(user.avatar)}
-              alt={follower.username}
-              style={styles.storyAvatar}
-            />
-                   )
-                   
-
-                 }
-          </div>
-
-          <span style={styles.storyUsername}>
-            {follower.username}
-          </span>
-        </div>
-      ))}
-
-            
           </div>
 
           {/* Loading State */}
@@ -1482,112 +1518,172 @@ export const InstagramDashboard = () => {
       )}
 
       {/* Story Viewer Modal */}
-      {showViewerModal && myStories.length > 0 && (
+      {showViewerModal && (
         <div style={styles.viewerOverlay}>
           <div style={styles.viewerContent}>
-            {/* Header */}
-            <div style={styles.viewerHeader}>
-              <div style={styles.viewerUser}>
-                <img src={getImageUrl(user.avatar)} style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
-                <span style={{ fontWeight: '600', fontSize: '14px' }}>Your Story</span>
-                <span style={{ fontSize: '12px', opacity: 0.7 }}>
-                  {myStories[currentStoryIndex] && formatTime(myStories[currentStoryIndex].createdAt)}
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                <button
-                  style={{ color: '#fff', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}
-                  onClick={() => { setShowViewerModal(false); setShowUploadModal(true); }}
-                  title="Add to Story"
-                >
-                  +
-                </button>
-                <button style={{ color: '#fff', background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }} onClick={() => setShowViewerModal(false)}>×</button>
-              </div>
-            </div>
+            {(() => {
+              // Determine which stories to show
+              const isOwnStory = viewingUserId === user.id || !viewingUserStories;
+              const currentStories = isOwnStory ? myStories : (viewingUserStories?.stories || []);
+              const currentUser = isOwnStory ? user : viewingUserStories?.user;
+              const currentStory = currentStories[currentStoryIndex];
 
-            {/* Progress Bar */}
-            <div style={styles.progressBarContainer}>
-              {myStories.map((_, idx) => (
-                <div key={idx} style={styles.progressBarBg}>
-                  <div style={{
-                    ...styles.progressBarFill,
-                    width: idx < currentStoryIndex ? '100%' : idx === currentStoryIndex ? '100%' : '0%' // active is full for static, ideally animated
-                  }}></div>
-                </div>
-              ))}
-            </div>
+              // If no story to show, return null
+              if (!currentStory) return null;
 
-            {/* Main Image */}
-            {myStories[currentStoryIndex] && myStories[currentStoryIndex].image && (
-              <img
-                src={getImageUrl(myStories[currentStoryIndex].image[0])} // Assuming single image for now per story or first of array
-                style={styles.storyImageFull}
-              />
-            )}
+              return (
+                <>
+                  {/* Header */}
+                  <div style={styles.viewerHeader}>
+                    <div style={styles.viewerUser}>
+                      <img
+                        src={getImageUrl(currentUser?.profilePicture || currentUser?.avatar)}
+                        style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                      <span style={{ fontWeight: '600', fontSize: '14px' }}>
+                        {isOwnStory ? 'Your Story' : currentUser?.username}
+                      </span>
+                      <span style={{ fontSize: '12px', opacity: 0.7 }}>
+                        {formatTime(currentStory.createdAt)}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                      {isOwnStory && (
+                        <button
+                          style={{ color: '#fff', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}
+                          onClick={() => { setShowViewerModal(false); setShowUploadModal(true); }}
+                          title="Add to Story"
+                        >
+                          +
+                        </button>
+                      )}
+                      <button
+                        style={{ color: '#fff', background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}
+                        onClick={() => {
+                          setShowViewerModal(false);
+                          setViewingUserId(null);
+                          setViewingUserStories(null);
+                          if (audioRef) {
+                            audioRef.pause();
+                            setIsPlaying(false);
+                          }
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
 
-            {/* Caption Overlay */}
-            {myStories[currentStoryIndex] && myStories[currentStoryIndex].storyCaption && (
-              <div style={{ position: 'absolute', bottom: '10%', left: '0', right: '0', textAlign: 'center', color: '#fff', padding: '20px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
-                {myStories[currentStoryIndex].storyCaption}
-              </div>
-            )}
+                  {/* Progress Bar */}
+                  <div style={styles.progressBarContainer}>
+                    {currentStories.map((_, idx) => (
+                      <div key={idx} style={styles.progressBarBg}>
+                        <div style={{
+                          ...styles.progressBarFill,
+                          width: idx <= currentStoryIndex ? '100%' : '0%'
+                        }}></div>
+                      </div>
+                    ))}
+                  </div>
 
-            {/* Audio Player */}
-            {myStories[currentStoryIndex] && myStories[currentStoryIndex].music && (
-              <>
-                <audio
-                  ref={(el) => {
-                    setAudioRef(el);
-                    if (el) {
-                      el.onplay = () => setIsPlaying(true);
-                      el.onpause = () => setIsPlaying(false);
-                    }
-                  }}
-                  src={getImageUrl(myStories[currentStoryIndex].music)}
-                  autoPlay
-                  loop
-                  style={{ display: 'none' }}
-                  onError={(e) => console.log("Audio play failed", e)}
-                />
+                  {/* Main Image */}
+                  {currentStory.image && (
+                    <img
+                      src={getImageUrl(Array.isArray(currentStory.image) ? currentStory.image[0] : currentStory.image)}
+                      style={styles.storyImageFull}
+                      alt="Story"
+                    />
+                  )}
 
-                {/* Music Player UI Overlay */}
-                <div style={styles.musicPlayerOverlay}>
-                  <span style={styles.musicIcon}>🎵</span>
-
-                  {/* Animated Waveform */}
-                  {isPlaying && (
-                    <div style={styles.musicWaveform}>
-                      <div style={{ ...styles.waveBar, animationDelay: '0s' }}></div>
-                      <div style={{ ...styles.waveBar, animationDelay: '0.2s' }}></div>
-                      <div style={{ ...styles.waveBar, animationDelay: '0.4s' }}></div>
-                      <div style={{ ...styles.waveBar, animationDelay: '0.1s' }}></div>
-                      <div style={{ ...styles.waveBar, animationDelay: '0.3s' }}></div>
+                  {/* Caption Overlay */}
+                  {currentStory.storyCaption && (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '10%',
+                      left: '0',
+                      right: '0',
+                      textAlign: 'center',
+                      color: '#fff',
+                      padding: '20px',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+                    }}>
+                      {currentStory.storyCaption}
                     </div>
                   )}
 
-                  {/* Play/Pause Button */}
-                  <button
-                    style={styles.playPauseBtn}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      togglePlayPause();
+                  {/* Audio Player */}
+                  {currentStory.music && (
+                    <>
+                      <audio
+                        ref={(el) => {
+                          setAudioRef(el);
+                          if (el) {
+                            el.onplay = () => setIsPlaying(true);
+                            el.onpause = () => setIsPlaying(false);
+                          }
+                        }}
+                        src={getImageUrl(currentStory.music)}
+                        autoPlay
+                        loop
+                        style={{ display: 'none' }}
+                        onError={(e) => console.log("Audio play failed", e)}
+                      />
+
+                      <div style={styles.musicPlayerOverlay}>
+                        <span style={styles.musicIcon}>🎵</span>
+                        {isPlaying && (
+                          <div style={styles.musicWaveform}>
+                            <div style={{ ...styles.waveBar, animationDelay: '0s' }}></div>
+                            <div style={{ ...styles.waveBar, animationDelay: '0.2s' }}></div>
+                            <div style={{ ...styles.waveBar, animationDelay: '0.4s' }}></div>
+                            <div style={{ ...styles.waveBar, animationDelay: '0.1s' }}></div>
+                            <div style={{ ...styles.waveBar, animationDelay: '0.3s' }}></div>
+                          </div>
+                        )}
+                        <button
+                          style={styles.playPauseBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            togglePlayPause();
+                          }}
+                          onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.3)'}
+                          onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
+                        >
+                          {isPlaying ? '⏸' : '▶'}
+                        </button>
+                        <span style={{ fontSize: '12px', fontWeight: '500' }}>Music</span>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Navigation Click Areas */}
+                  <div
+                    style={styles.navAreaLeft}
+                    onClick={() => {
+                      if (currentStoryIndex > 0) {
+                        setCurrentStoryIndex(prev => prev - 1);
+                      }
                     }}
-                    onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.3)'}
-                    onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
-                  >
-                    {isPlaying ? '⏸' : '▶'}
-                  </button>
-
-                  <span style={{ fontSize: '12px', fontWeight: '500' }}>Music</span>
-                </div>
-              </>
-            )}
-
-            {/* Navigation Click Areas */}
-            <div style={styles.navAreaLeft} onClick={prevStory}></div>
-            <div style={styles.navAreaRight} onClick={nextStory}></div>
-
+                  ></div>
+                  <div
+                    style={styles.navAreaRight}
+                    onClick={() => {
+                      if (currentStoryIndex < currentStories.length - 1) {
+                        setCurrentStoryIndex(prev => prev + 1);
+                      } else {
+                        setShowViewerModal(false);
+                        setViewingUserId(null);
+                        setViewingUserStories(null);
+                        if (audioRef) {
+                          audioRef.pause();
+                          setIsPlaying(false);
+                        }
+                      }
+                    }}
+                  ></div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}

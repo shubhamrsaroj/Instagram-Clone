@@ -43,7 +43,7 @@ const storage = new CloudinaryStorage({
             return {
                 folder: "instagram_clone",
                 resource_type: "video"
-            }; 
+            };
         } else {
             return {
                 folder: "instagram_clone",
@@ -318,14 +318,9 @@ routers.put("/profile/:profileId/posts/:postsId/", async (req, res) => {
         { new: true }
 
     );
-
-
-
     return res.status(200).json({ message: "Caption Update", captionUpdate: updatedCaption });
 
     //{ $set: { "arrayName.$.fieldName": value } }
-
-
 
 });
 
@@ -414,7 +409,6 @@ routers.get("/profileId/:profileId/postsData/:postId", protect, async (req, res)
 //one thing i can do 
 //
 
-
 routers.get("/followersData/:profileId", protect, async (req, res) => {
 
     const { profileId } = req.params;
@@ -422,18 +416,19 @@ routers.get("/followersData/:profileId", protect, async (req, res) => {
     const profile = await Profile.findOne({ user: profileId }).populate({
         path: "followedBy",
         select: "username",
-        populate:{
-            path:"profile",
-            select:"profilePicture"
+        populate: {
+            path: "profile",
+            select: "profilePicture"
         }
     });
+
 
     const followingData = await Profile.findOne({ user: profileId }).populate({
         path: "following",
         select: "username",
-        populate:{
-            path:"profile",
-            select:"profilePicture"
+        populate: {
+            path: "profile",
+            select: "profilePicture"
         }
     });
 
@@ -442,7 +437,7 @@ routers.get("/followersData/:profileId", protect, async (req, res) => {
     ({
         _id: user._id,
         username: user.username,
-        profilePicture:user.profile?.profilePicture
+        profilePicture: user.profile?.profilePicture
     }
     ));
 
@@ -453,7 +448,7 @@ routers.get("/followersData/:profileId", protect, async (req, res) => {
 
         _id: user._id,
         username: user.username,
-        profilePicture:user.profile?.profilePicture
+        profilePicture: user.profile?.profilePicture
 
 
     }));
@@ -497,10 +492,18 @@ routers.get("/everyPosts", protect, async (req, res) => {  // ✅ Added protect
     try {
         const currentUserId = req.user._id;  // ✅ Get current user
 
+        const currentUserProfile = await Profile.findOne({user:currentUserId});
+
+
+        const savedPostsIdSet = new Set((currentUserProfile?.savedPosts || []).map(sp =>sp.postId?.toString()).filter(Boolean));
+
+
         const profiles = await Profile.find({})
             .populate("user", "username email")
             .populate("posts.comments.commentedBy posts.comments.likedBy", "username") // ✅ Populate comment authors
             .select("posts user profilePicture");
+
+    
 
         const allPosts = profiles.flatMap(profile =>
             profile.posts.map(post => {
@@ -516,9 +519,12 @@ routers.get("/everyPosts", protect, async (req, res) => {  // ✅ Added protect
                 // ✅ Calculate likes count properly
                 const likesCount = post.likedBy?.length || 0;
 
+                const isSaved = savedPostsIdSet.has(post._id.toString());
+
                 return {
                     ...postObj,
-                    isLiked: isLiked,           // ✅ Current user's like status
+                    isLiked: isLiked,    
+                    isSaved:isSaved,       // ✅ Current user's like status
                     likesCount: likesCount,     // ✅ Use consistent naming
                     postedBy: {
                         _id: profile.user._id,
@@ -535,6 +541,7 @@ routers.get("/everyPosts", protect, async (req, res) => {  // ✅ Added protect
                         user: comment.commentedBy?.username || "Unknown", // ✅ Map username
                         createdAt: comment.createdAt,
                         likesCount: comment.likedBy?.length || 0,
+                        
                         isLiked: comment.likedBy?.some(id => id.toString() === currentUserId.toString()) || false,
                         likedComment: comment.likedBy?._id
                     }))
@@ -563,8 +570,6 @@ routers.post("/profile/:userId/follow", protect, async (req, res) => {
 
     const myprofile = await Profile.findOne({ user: currentUsersId });
 
-
-
     if (!profile.followedBy) {
         profile.followedBy = [];
     }
@@ -576,11 +581,7 @@ routers.post("/profile/:userId/follow", protect, async (req, res) => {
     const currentUserId = req.user._id;
     const alreadyFollowed = profile.followedBy.some(id => String(id) === String(currentUserId));
 
-
     const alreadyFollowing = myprofile.following.some((id) => String(id) === String(userId));
-
-
-
     if (alreadyFollowed) {
         profile.followedBy = profile.followedBy.filter(id => String(id) !== String(currentUserId));
     } else {
@@ -665,9 +666,7 @@ routers.post("/profile/:userId/comment/:postsId/:profileId/:commentId/like", pro
 });
 
 
-routers.post("/stories", protect, (req, res, next) => {
-
-
+routers.post("/stories/:userId", protect, (req, res, next) => {
 
     const uploadMiddleware = upload.fields([{ name: 'image', maxCount: 10 }, { name: 'music', maxCount: 1 }]);
     uploadMiddleware(req, res, (err) => {
@@ -678,63 +677,63 @@ routers.post("/stories", protect, (req, res, next) => {
         next();
     });
 
-}, 
+},
 
-async (req, res) => {
+    async (req, res) => {
 
-    try {
-        const userId = req.user._id;
+        try {
 
-        let { captionText } = req.body;
+            const { userId } = req.params;
+            let { captionText } = req.body;
 
-        // Handle images
-        let images = [];
-        if (req.files && req.files['image']) {
-            images = req.files['image'].map(file => file.path);
+            // Handle images
+            let images = [];
+            if (req.files && req.files['image']) {
+                images = req.files['image'].map(file => file.path);
+            }
+
+
+            // Handle music
+            let music = "";
+            if (req.files && req.files['music']) {
+                music = req.files['music'][0].path;
+            }
+
+
+            const profile = await Profile.findOne({ user: userId });
+
+            if (!profile) {
+                return res.status(404).json({ message: "Profile not found" });
+            }
+
+            const newStory = {
+
+                image: images,
+                storyCaption: captionText,
+                music: music
+
+            };
+
+            if (!profile.stories) {
+                profile.stories = [];
+            }
+
+            profile.stories.unshift(newStory);
+
+            await profile.save();
+
+            return res.status(200).json({ message: "Successfully posted Story" });
+
+        } catch (err) {
+            console.error("Story Route Error:", err);
+            return res.status(500).json({ message: "Internal server error", error: err.message });
         }
 
+    });
 
-                // Handle music
-        let music = "";
-        if (req.files && req.files['music']) {
-            music = req.files['music'][0].path;
-        }
+routers.get("/story/:userId", protect, async (req, res) => {
 
-
-        const profile = await Profile.findOne({ user: userId });
-
-        if (!profile) {
-            return res.status(404).json({ message: "Profile not found" });
-        }
-
-        const newStory = {
-
-            image: images,
-            storyCaption: captionText,
-            music: music
-
-        };
-
-        if (!profile.stories) {
-            profile.stories = [];
-        }
-
-        profile.stories.unshift(newStory);
-
-        await profile.save();
-
-        return res.status(200).json({ message: "Successfully posted Story" });
-
-    } catch (err) {
-        console.error("Story Route Error:", err);
-        return res.status(500).json({ message: "Internal server error", error: err.message });
-    }
-
-});
-
-routers.get("/story", protect, async (req, res) => {
-
-    const userId = req.user._id;
+    const { userId } = req.params;
 
     const myprofile = await Profile.findOne({ user: userId });
 
@@ -742,29 +741,57 @@ routers.get("/story", protect, async (req, res) => {
 
 });
 
-routers.delete("/stories/:storiesId",protect,async(req,res)=>{
-    
-    const  userId = req.user._id;
+routers.delete("/stories/:storiesId", protect, async (req, res) => {
 
-    const {storiesId} = req.params;
+    const userId = req.user._id;
 
-    const myprofile = await Profile.findOne({user:userId});
+    const { storiesId } = req.params;
+
+    const myprofile = await Profile.findOne({ user: userId });
 
     await Profile.findByIdAndUpdate(
 
         myprofile._id,
-        {$pull :{stories:{_id : storiesId}}},
-        {new:true}
+        { $pull: { stories: { _id: storiesId } } },
+        { new: true }
 
     );
 
-    return res.status(200).json({message:"Deleted stories successfully"});
-    
+    return res.status(200).json({ message: "Deleted stories successfully" });
+
+});
+
+routers.post("/savedPosts/:postsId/:userId",protect, async (req, res) => {
+
+
+    const { postsId, userId } = req.params;
+
+    const profile = await Profile.findOne({ user: userId });
+
+
+    if (!profile.savedPosts) {
+        profile.savedPosts = [];
+    }
+
+    const alreadySaved = profile.savedPosts.some((item) => String(item.postId) === String(postsId));
+
+    if (alreadySaved) {
+        profile.savedPosts = profile.savedPosts.filter((item) => String(item.postId) !== String(postsId));
+    }
+    else {
+        profile.savedPosts.push({ postId: postsId, ownerId: userId });
+    }
+
+    await profile.save();
+
+    return res.status(200).json({ message: "succesfully saved" });
+
 });
 
 
 
-
 export default routers;
+
+
 
 

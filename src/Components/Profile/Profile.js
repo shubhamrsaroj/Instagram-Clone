@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useRef } from 'react';
 import { GrUpload } from "react-icons/gr";
 
+
 // Icons Component
 
 const BACKEND_URL = "http://localhost:5000";
@@ -85,6 +86,590 @@ const highlights = [
   { id: 6, name: "Gym", image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=100&h=100&fit=crop" },
 ];
 
+
+const styles = {
+  container: {
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    backgroundColor: '#fafafa',
+    minHeight: '100vh',
+    margin: 0,
+    padding: 0,
+  },
+  header: {
+    backgroundColor: '#fff',
+    borderBottom: '1px solid #dbdbdb',
+    padding: '12px 20px',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    maxWidth: '975px',
+    margin: '0 auto',
+  },
+  logo: {
+    fontSize: '24px',
+    fontFamily: 'cursive',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+  },
+  searchBar: {
+    padding: '8px 16px',
+    backgroundColor: '#efefef',
+    border: 'none',
+    borderRadius: '8px',
+    width: '250px',
+    fontSize: '14px',
+    outline: 'none',
+  },
+  navIcons: {
+    display: 'flex',
+    gap: '22px',
+    alignItems: 'center',
+  },
+  navIcon: {
+    fontSize: '24px',
+    cursor: 'pointer',
+    background: 'none',
+    border: 'none',
+    padding: 0,
+  },
+  mainContent: {
+    maxWidth: '975px',
+    margin: '0 auto',
+    paddingTop: '80px',
+    display: 'flex',
+    gap: '30px',
+    padding: '80px 20px 20px',
+  },
+  feedSection: {
+    flex: '1',
+    maxWidth: '614px',
+  },
+  sidebarSection: {
+    width: '320px',
+    position: 'sticky',
+    top: '80px',
+    height: 'fit-content',
+  },
+  storiesContainer: {
+    backgroundColor: '#fff',
+    border: '1px solid #dbdbdb',
+    borderRadius: '8px',
+    padding: '16px',
+    marginBottom: '24px',
+    display: 'flex',
+    gap: '15px',
+    overflowX: 'auto',
+  },
+  storyItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    cursor: 'pointer',
+    flexShrink: 0,
+  },
+  storyRing: {
+    padding: '3px',
+    borderRadius: '50%',
+    background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+  },
+  storyRingNoNew: {
+    padding: '3px',
+    borderRadius: '50%',
+    background: '#dbdbdb',
+  },
+  storyAvatar: {
+    width: '56px',
+    height: '56px',
+    borderRadius: '50%',
+    border: '3px solid #fff',
+    objectFit: 'cover',
+  },
+  storyUsername: {
+    fontSize: '12px',
+    marginTop: '6px',
+    maxWidth: '74px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  addStory: {
+    position: 'relative',
+  },
+  addIcon: {
+    position: 'absolute',
+    bottom: '0',
+    right: '0',
+    backgroundColor: '#0095f6',
+    color: '#fff',
+    borderRadius: '50%',
+    width: '20px',
+    height: '20px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '16px',
+    border: '2px solid #fff',
+  },
+  post: {
+    backgroundColor: '#fff',
+    border: '1px solid #dbdbdb',
+    borderRadius: '8px',
+    marginBottom: '24px',
+  },
+  postHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '14px',
+    justifyContent: 'space-between',
+  },
+  postUserInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    cursor: 'pointer',
+  },
+  postAvatar: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+    objectFit: 'cover',
+  },
+  postUsername: {
+    fontWeight: '600',
+    fontSize: '14px',
+  },
+  postLocation: {
+    fontSize: '12px',
+    color: '#8e8e8e',
+  },
+  postImage: {
+    width: '100%',
+    maxHeight: '600px',
+    objectFit: 'contain',
+    backgroundColor: '#000',
+    display: 'block',
+  },
+  postActions: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '12px 16px',
+  },
+  actionButtons: {
+    display: 'flex',
+    gap: '16px',
+  },
+  actionBtn: {
+    background: 'none',
+    border: 'none',
+    fontSize: '24px',
+    cursor: 'pointer',
+    padding: 0,
+    transition: 'transform 0.2s',
+  },
+  likedBtn: {
+    color: '#ed4956',
+  },
+  savedBtn: {
+    color: '#262626',
+  },
+  postContent: {
+    padding: '0 16px 16px',
+  },
+  likesCount: {
+    fontWeight: '600',
+    fontSize: '14px',
+    marginBottom: '8px',
+  },
+  caption: {
+    fontSize: '14px',
+    marginBottom: '8px',
+  },
+  captionUsername: {
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+  viewComments: {
+    color: '#8e8e8e',
+    fontSize: '14px',
+    cursor: 'pointer',
+    marginBottom: '4px',
+  },
+  comment: {
+    fontSize: '14px',
+    marginBottom: '4px',
+  },
+  commentUser: {
+    fontWeight: '600',
+  },
+  postTime: {
+    fontSize: '10px',
+    color: '#8e8e8e',
+    textTransform: 'uppercase',
+    marginTop: '8px',
+  },
+  addComment: {
+    display: 'flex',
+    padding: '12px 16px',
+    borderTop: '1px solid #efefef',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  commentInput: {
+    flex: 1,
+    border: 'none',
+    outline: 'none',
+    fontSize: '14px',
+  },
+  postBtn: {
+    color: '#0095f6',
+    fontWeight: '600',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '14px',
+  },
+  sidebarProfile: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    marginBottom: '24px',
+  },
+  sidebarAvatar: {
+    width: '56px',
+    height: '56px',
+    borderRadius: '50%',
+    objectFit: 'cover',
+  },
+  sidebarUsername: {
+    fontWeight: '600',
+    fontSize: '14px',
+  },
+  sidebarName: {
+    color: '#8e8e8e',
+    fontSize: '14px',
+  },
+  switchBtn: {
+    marginLeft: 'auto',
+    color: '#0095f6',
+    fontWeight: '600',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '12px',
+  },
+  suggestionsHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: '16px',
+  },
+  suggestionsTitle: {
+    color: '#8e8e8e',
+    fontWeight: '600',
+    fontSize: '14px',
+  },
+  seeAllBtn: {
+    fontWeight: '600',
+    fontSize: '12px',
+    cursor: 'pointer',
+  },
+  suggestionItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '16px',
+  },
+  suggestionAvatar: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+    objectFit: 'cover',
+  },
+  suggestionInfo: {
+    flex: 1,
+  },
+  suggestionUsername: {
+    fontWeight: '600',
+    fontSize: '14px',
+  },
+  suggestionFollowed: {
+    color: '#8e8e8e',
+    fontSize: '12px',
+  },
+  followBtn: {
+    color: '#0095f6',
+    fontWeight: '600',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '12px',
+  },
+  footer: {
+    marginTop: '24px',
+    fontSize: '11px',
+    color: '#c7c7c7',
+  },
+  footerLinks: {
+    marginBottom: '16px',
+  },
+  footerLink: {
+    color: '#c7c7c7',
+    textDecoration: 'none',
+    marginRight: '8px',
+  },
+  loadingContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '40px',
+  },
+  loadingSpinner: {
+    width: '30px',
+    height: '30px',
+    border: '3px solid #dbdbdb',
+    borderTop: '3px solid #262626',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+  },
+  noPostsContainer: {
+    backgroundColor: '#fff',
+    border: '1px solid #dbdbdb',
+    borderRadius: '8px',
+    padding: '40px',
+    textAlign: 'center',
+  },
+  noPostsIcon: {
+    fontSize: '48px',
+    marginBottom: '16px',
+  },
+  noPostsText: {
+    color: '#8e8e8e',
+    fontSize: '14px',
+  },
+  commentContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '4px',
+  },
+  commentContent: {
+    fontSize: '14px',
+    flex: 1,
+    marginRight: '8px',
+  },
+  commentLikeBtn: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '10px',
+    padding: '0',
+  },
+  commentLiked: {
+    // styles handled by icon
+  },
+  // New Modal Styles
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    zIndex: 1000,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  uploadModalContent: {
+    backgroundColor: '#fff',
+    borderRadius: '12px',
+    padding: '20px',
+    width: '400px',
+    maxWidth: '90%',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '15px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+  },
+  modalHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottom: '1px solid #dbdbdb',
+    paddingBottom: '10px',
+    marginBottom: '10px',
+  },
+  modalTitle: {
+    fontWeight: '600',
+    fontSize: '16px',
+    textAlign: 'center',
+    flex: 1,
+  },
+  closeBtn: {
+    background: 'none',
+    border: 'none',
+    fontSize: '24px',
+    cursor: 'pointer',
+    padding: 0,
+  },
+  fileInputWrapper: {
+    textAlign: 'center',
+    padding: '40px',
+    border: '2px dashed #dbdbdb',
+    borderRadius: '8px',
+    cursor: 'pointer',
+  },
+  captionInput: {
+    width: '100%',
+    padding: '10px',
+    border: '1px solid #dbdbdb',
+    borderRadius: '4px',
+    fontSize: '14px',
+    outline: 'none',
+  },
+  primaryBtn: {
+    backgroundColor: '#0095f6',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '4px',
+    padding: '8px 16px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  viewerOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#1a1a1a',
+    zIndex: 2000,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  viewerContent: {
+    position: 'relative',
+    height: '100%',
+    width: '100%',
+    maxWidth: '500px', // Mobile ratio
+    display: 'flex',
+    justifyContent: 'center',
+    flexDirection: 'column',
+  },
+  storyImageFull: {
+    width: '100%',
+    height: '80%',
+    objectFit: 'contain',
+  },
+  viewerHeader: {
+    position: 'absolute',
+    top: '20px',
+    left: '10px',
+    right: '10px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  viewerUser: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    color: '#fff',
+  },
+  progressBarContainer: {
+    position: 'absolute',
+    top: '10px',
+    left: '10px',
+    right: '10px',
+    display: 'flex',
+    gap: '5px',
+    zIndex: 10,
+  },
+  progressBarBg: {
+    flex: 1,
+    height: '2px',
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: '2px',
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#fff',
+    // Simple animation could go here, but doing static for now
+    width: '100%',
+  },
+  navAreaLeft: {
+    position: 'absolute',
+    top: '50px',
+    bottom: '0',
+    left: '0',
+    width: '30%',
+    cursor: 'pointer',
+    zIndex: 5,
+  },
+  navAreaRight: {
+    position: 'absolute',
+    top: '50px',
+    bottom: '0',
+    right: '0',
+    width: '30%',
+    cursor: 'pointer',
+    zIndex: 5,
+  },
+  musicPlayerOverlay: {
+    position: 'absolute',
+    bottom: '15%',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backdropFilter: 'blur(10px)',
+    padding: '12px 20px',
+    borderRadius: '30px',
+    zIndex: 15,
+    color: '#fff',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+  },
+  musicIcon: {
+    fontSize: '20px',
+    animation: 'pulse 1.5s ease-in-out infinite',
+  },
+  playPauseBtn: {
+    background: 'rgba(255, 255, 255, 0.2)',
+    border: 'none',
+    borderRadius: '50%',
+    width: '36px',
+    height: '36px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    fontSize: '16px',
+    color: '#fff',
+    transition: 'all 0.2s',
+  },
+  musicWaveform: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '3px',
+    height: '20px',
+  },
+  waveBar: {
+    width: '3px',
+    backgroundColor: '#fff',
+    borderRadius: '2px',
+    animation: 'wave 1s ease-in-out infinite',
+  },
+};
 
 
 
@@ -186,34 +771,34 @@ const InstagramProfile = () => {
                   key={index}
                   className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                 >
-                  <div className="flex items-center space-x-3">
-                    {/* Profile Picture */}
-                    <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-200">
-                      {user.profilePicture ? (
-                        <img
-                          src={getImageUrl(user.profilePicture)}
-                          alt={user.username}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold">
-                          {user.username?.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
 
-                    {/* Username & Name */}
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                        {user.username}
-                      </p>
-                      {user.name && (
-                        <p className="text-gray-500 text-sm">
-                          {user.name}
-                        </p>
-                      )}
-                    </div>
+                  {/* Profile Picture */}
+                  <div className="w-20 h-20 rounded-full overflow-hidden cursor-pointer group relative">
+                    {profileData.profilePicture ? (
+                      <img
+                        src={getImageUrl(profileData.profilePicture)}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold">
+                        {user.username?.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Username & Name */}
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white text-sm">
+                      {user.username}
+                    </p>
+                    {user.name && (
+                      <p className="text-gray-500 text-sm">
+                        {user.name}
+                      </p>
+                    )}
+                  </div>
+
 
                   {/* Optional Follow Button */}
                   <button className="px-4 py-1.5 bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-white text-sm font-semibold rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 transition">
@@ -1239,6 +1824,93 @@ const InstagramProfile = () => {
   }, [id, showPost]);
 
 
+  const [stories, setStories] = useState([
+    { id: 'my_story', username: 'Your Story', avatar: '', isYours: true, hasNew: false }
+  ]);
+
+  const [myStories, setMyStories] = useState([]);
+
+  const fetchMyStories = async () => {
+
+    try {
+      const res = await api.get(`/auth/story/${user.id}`);
+
+      console.log("My stories:", res.data);
+
+      if (res.data.stories) {
+        setMyStories(res.data.stories);
+
+        setStories(prev => prev.map(s =>
+          s.isYours ? { ...s, hasNew: res.data.stories.length > 0, avatar: getImageUrl(user.avatar) } : s
+        ));
+      }
+    } catch (err) {
+      console.error("Failed to fetch stories", err);
+    }
+
+  };
+
+
+
+  useEffect(() => {
+    if (user.id) {
+      fetchMyStories();
+    }
+  }, [user.id]); // Re-fetch when user loads
+
+
+  const [userStoriesMap, setUserStoriesMap] = useState({});
+  const [viewingUserId, setViewingUserId] = useState(null);
+  const [viewingUserStories, setViewingUserStories] = useState(null);
+  const [showViewerModal, setShowViewerModal] = useState(false);
+  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
+  const [followers, setFollowers] = useState([]);
+  const [isPlaying, setIsPlaying] = useState(false); // Audio playback state
+  const [audioRef, setAudioRef] = useState(null);
+  const togglePlayPause = () => {
+    if (audioRef) {
+      if (isPlaying) {
+        audioRef.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
+
+
+  const handleStoryClick = (story) => {
+    if (story.isYours) {
+      setViewingUserId(user.id);
+      setViewingUserStories(null);
+      if (myStories.length > 0) {
+        setShowViewerModal(true);
+        setCurrentStoryIndex(0);
+      } else {
+        setShowUploadModal(true);
+      }
+    }
+  };
+
+  const formatTime = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffMinutes = Math.floor(diffTime / (1000 * 60));
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffMinutes < 1) return 'Just now';
+    if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+
   // Add this right before return
   console.log("🔶 RENDERING with isOwnProfile:", profileData.isOwnProfile);
   return (
@@ -1369,15 +2041,21 @@ const InstagramProfile = () => {
           </div>
 
           {/* Desktop Layout */}
-          <div className="hidden md:flex items-start space-x-10 py-6">
+          <div className="hidden md:flex items-start space-x-10 px-4 py-8">
             {/* Profile Picture */}
-            <div className="w-36 h-36 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 flex-shrink-0">
+            <div className="w-40 h-40 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 flex-shrink-0">
               <div className="w-full h-full rounded-full bg-white dark:bg-black p-[3px]">
-                <img
-                  src={getImageUrl(profileData.profilePicture)}
-                  alt={profileData.username}
-                  className="w-full h-full rounded-full object-cover"
-                />
+                <div className="w-full h-full rounded-full overflow-hidden">
+                  {profileData.profilePicture ? (
+                    <img
+                      src={getImageUrl(profileData.profilePicture)}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500"></div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1486,7 +2164,83 @@ const InstagramProfile = () => {
 
         {/* Story Highlights */}
         <div className="px-4 pb-4">
-          <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2">
+          {/* Desktop Stories Section */}
+          <div className="hidden md:block mb-6">
+            <div className="flex space-x-6 overflow-x-auto scrollbar-hide pb-2">
+              {/* User's Own Story */}
+              {stories.map((story) => (
+                <div
+                  key={story.id}
+                  className="flex flex-col items-center gap-1 cursor-pointer flex-shrink-0"
+                  onClick={() => handleStoryClick(story)}
+                >
+                  <div className={`p-[2px] rounded-full ${story.hasNew || story.isYours ? 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500' : 'bg-gray-300 dark:bg-gray-700'}`}>
+                    <div className="bg-white dark:bg-black p-[2px] rounded-full">
+                      <div className="w-16 h-16 rounded-full overflow-hidden">
+                        {story.avatar ? (
+                          <img
+                            src={story.avatar}
+                            alt={story.username}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                            {story.isYours && <Icons.Plus />}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-900 dark:text-white truncate max-w-[74px] text-center">
+                    {story.isYours ? 'Your Story' : story.username}
+                  </span>
+                </div>
+              ))}
+
+              {/* Follower Stories */}
+              {followers.map((follower) => {
+                const hasStories = userStoriesMap[follower._id] && userStoriesMap[follower._id].length > 0;
+
+                return (
+                  <div
+                    key={follower._id}
+                    className="flex flex-col items-center gap-1 cursor-pointer flex-shrink-0"
+                    onClick={() => {
+                      const stories = userStoriesMap[follower._id];
+                      if (stories && stories.length > 0) {
+                        setViewingUserId(follower._id);
+                        setViewingUserStories({ user: follower, stories: stories });
+                        setCurrentStoryIndex(0);
+                        setShowViewerModal(true);
+                      }
+                    }}
+                  >
+                    <div className={`p-[2px] rounded-full ${hasStories ? 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500' : 'bg-gray-300 dark:bg-gray-700'}`}>
+                      <div className="bg-white dark:bg-black p-[2px] rounded-full">
+                        <div className="w-16 h-16 rounded-full overflow-hidden">
+                          {follower.profilePicture ? (
+                            <img
+                              src={getImageUrl(follower.profilePicture)}
+                              alt={follower.username}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500"></div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-900 dark:text-white truncate max-w-[74px] text-center">
+                      {follower.username}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Story Highlights (mobile) */}
+          <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2 md:hidden">
             {profileData.isOwnProfile && (
               <StoryHighlight isNew />
             )}
@@ -1780,6 +2534,176 @@ const InstagramProfile = () => {
             getImageUrl={getImageUrl}
             profileData={profileData}
           />
+        )}
+
+        {showViewerModal && (
+          <div style={styles.viewerOverlay}>
+            <div style={styles.viewerContent}>
+              {(() => {
+                // Determine which stories to show
+                const isOwnStory = viewingUserId === user.id || !viewingUserStories;
+                const currentStories = isOwnStory ? myStories : (viewingUserStories?.stories || []);
+                const currentUser = isOwnStory ? user : viewingUserStories?.user;
+                const currentStory = currentStories[currentStoryIndex];
+
+                // If no story to show, return null
+                if (!currentStory) return null;
+
+                return (
+                  <>
+                    {/* Header */}
+                    <div style={styles.viewerHeader}>
+                      <div style={styles.viewerUser}>
+                        <img
+                          src={getImageUrl(currentUser?.profilePicture || currentUser?.avatar)}
+                          style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                        />
+                        <span style={{ fontWeight: '600', fontSize: '14px' }}>
+                          {isOwnStory ? 'Your Story' : currentUser?.username}
+                        </span>
+                        <span style={{ fontSize: '12px', opacity: 0.7 }}>
+                          {formatTime(currentStory.createdAt)}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                        {isOwnStory && (
+                          <button
+                            style={{ color: '#fff', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}
+                            onClick={() => { setShowViewerModal(false); setShowUploadModal(true); }}
+                            title="Add to Story"
+                          >
+                            +
+                          </button>
+                        )}
+                        <button
+                          style={{ color: '#fff', background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}
+                          onClick={() => {
+                            setShowViewerModal(false);
+                            setViewingUserId(null);
+                            setViewingUserStories(null);
+                            if (audioRef) {
+                              audioRef.pause();
+                              setIsPlaying(false);
+                            }
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div style={styles.progressBarContainer}>
+                      {currentStories.map((_, idx) => (
+                        <div key={idx} style={styles.progressBarBg}>
+                          <div style={{
+                            ...styles.progressBarFill,
+                            width: idx <= currentStoryIndex ? '100%' : '0%'
+                          }}></div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Main Image */}
+                    {currentStory.image && (
+                      <img
+                        src={getImageUrl(Array.isArray(currentStory.image) ? currentStory.image[0] : currentStory.image)}
+                        style={styles.storyImageFull}
+                        alt="Story"
+                      />
+                    )}
+
+                    {/* Caption Overlay */}
+                    {currentStory.storyCaption && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '10%',
+                        left: '0',
+                        right: '0',
+                        textAlign: 'center',
+                        color: '#fff',
+                        padding: '20px',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+                      }}>
+                        {currentStory.storyCaption}
+                      </div>
+                    )}
+
+                    {/* Audio Player */}
+                    {currentStory.music && (
+                      <>
+                        <audio
+                          ref={(el) => {
+                            setAudioRef(el);
+                            if (el) {
+                              el.onplay = () => setIsPlaying(true);
+                              el.onpause = () => setIsPlaying(false);
+                            }
+                          }}
+                          src={getImageUrl(currentStory.music)}
+                          autoPlay
+                          loop
+                          style={{ display: 'none' }}
+                          onError={(e) => console.log("Audio play failed", e)}
+                        />
+
+                        <div style={styles.musicPlayerOverlay}>
+                          <span style={styles.musicIcon}>🎵</span>
+                          {isPlaying && (
+                            <div style={styles.musicWaveform}>
+                              <div style={{ ...styles.waveBar, animationDelay: '0s' }}></div>
+                              <div style={{ ...styles.waveBar, animationDelay: '0.2s' }}></div>
+                              <div style={{ ...styles.waveBar, animationDelay: '0.4s' }}></div>
+                              <div style={{ ...styles.waveBar, animationDelay: '0.1s' }}></div>
+                              <div style={{ ...styles.waveBar, animationDelay: '0.3s' }}></div>
+                            </div>
+                          )}
+                          <button
+                            style={styles.playPauseBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              togglePlayPause();
+                            }}
+                            onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.3)'}
+                            onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
+                          >
+                            {isPlaying ? '⏸' : '▶'}
+                          </button>
+                          <span style={{ fontSize: '12px', fontWeight: '500' }}>Music</span>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Navigation Click Areas */}
+                    <div
+                      style={styles.navAreaLeft}
+                      onClick={() => {
+                        if (currentStoryIndex > 0) {
+                          setCurrentStoryIndex(prev => prev - 1);
+                        }
+                      }}
+                    ></div>
+                    <div
+                      style={styles.navAreaRight}
+                      onClick={() => {
+                        if (currentStoryIndex < currentStories.length - 1) {
+                          setCurrentStoryIndex(prev => prev + 1);
+                        } else {
+                          setShowViewerModal(false);
+                          setViewingUserId(null);
+                          setViewingUserStories(null);
+                          if (audioRef) {
+                            audioRef.pause();
+                            setIsPlaying(false);
+                          }
+                        }
+                      }}
+                    ></div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
         )}
       </div>
     </div>
